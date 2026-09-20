@@ -1,0 +1,16 @@
+# Hệ điều hành MacOS
+.DS_Store
+
+# Môi trường Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# Cấu hình IDE (VS Code)
+.vscode/
+
+# File tạm, logs
+*.log
