@@ -19,7 +19,7 @@ class State:
         #giúp tìm kiếm trạng thái nhanh hơn 
         return hash((self.agent_pos,self.boxes))
 
-    def __is_goal_state(self,board):
+    def is_goal(self,board):
         
         #Sử dụng hàm is_goal từ class Board bạn vừa tạo để kiểm tra chiến thắng.
         #Trạng thái đích là khi toàn bộ hộp đều nằm trên ô goal.
