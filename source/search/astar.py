@@ -34,7 +34,9 @@ class AStar(SearchAlgorithm):
             total += best_distance
         return total
 
-    def search(self, start_state, board):
+    def search(self, start_state, board, timeout_seconds=1.0):
+        import time
+        start_time = time.time()
         pq = []
         tie_breaker = 0
 
@@ -50,6 +52,9 @@ class AStar(SearchAlgorithm):
         parent = {}
 
         while pq:
+            if time.time() - start_time > timeout_seconds:
+                return None, 0, expanded_nodes, max_queue_size
+
             current_f, _, current_state = heapq.heappop(pq)
 
             if current_state.is_goal(board):

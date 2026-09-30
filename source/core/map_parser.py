@@ -42,3 +42,35 @@ class MapParser:
         state = State(agent_pos = agent_pos,boxes = boxes)
         return board,state
 
+    @staticmethod
+    def parse_competitive_level(map_lines):
+        from core.competitive_state import CompetitiveState
+        walls = set()
+        goals = set()
+        boxes = []
+        agent1_pos = None
+        agent2_pos = None
+        height = len(map_lines)
+        width = max((len(lines) for lines in map_lines), default=0)
+
+        for row, line in enumerate(map_lines):
+            for col, cell in enumerate(line):
+                pos = (row, col)
+                if cell == "%":
+                    walls.add(pos)
+                elif cell == "D":
+                    goals.add(pos)
+                elif cell == "A":
+                    agent1_pos = pos
+                elif cell == "E":
+                    agent2_pos = pos
+                elif cell == "B":
+                    boxes.append(pos)
+                elif cell == "C":
+                    boxes.append(pos)
+                    goals.add(pos)
+                    
+        board = Board(width=width, height=height, walls=walls, goals=goals)
+        state = CompetitiveState(agent1_pos, agent2_pos, boxes, [], [])
+        return board, state
+

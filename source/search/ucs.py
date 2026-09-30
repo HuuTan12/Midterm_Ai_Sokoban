@@ -15,7 +15,9 @@ def reconstruct_path(goal_state, parent):
     return path
 
 class UCS(SearchAlgorithm):
-    def search(self, start_state, board):
+    def search(self, start_state, board, timeout_seconds=1.0):
+        import time
+        start_time = time.time()
         priority_queue = []
         tie_breaker = 0
         expanded_nodes = 0
@@ -28,6 +30,9 @@ class UCS(SearchAlgorithm):
         cost_so_far = {start_state: 0}
 
         while priority_queue:
+            if time.time() - start_time > timeout_seconds:
+                return None, 0, expanded_nodes, max_queue_size
+
             current_fee, _, current_state = heapq.heappop(priority_queue)
 
             if current_state in visited:
