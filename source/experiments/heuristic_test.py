@@ -2,7 +2,7 @@ from collections import deque
 
 from core.map_parser import MapParser
 from core.rules import Rules
-from search.astar import heuristic
+from search.astar import AStar
 
 
 map_lines = MapParser.load_map("maps/example_map.txt")
@@ -70,7 +70,7 @@ for state in states:
     if state not in real_costs:
         continue
 
-    h = heuristic(state, board)
+    h = AStar().heuristic(state, board)
     real_cost = real_costs[state]
 
     if h > real_cost:
@@ -92,10 +92,10 @@ print("\n========== CONSISTENCY ==========")
 consistent = True
 
 for state in states:
-    h_current = heuristic(state, board)
+    h_current = AStar().heuristic(state, board)
 
     for action, new_state in Rules.get_successors(state, board):
-        h_next = heuristic(new_state, board)
+        h_next = AStar().heuristic(new_state, board)
 
         cost = 1
 

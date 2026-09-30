@@ -1,5 +1,5 @@
 from core.map_parser import MapParser
-from search.ucs import ucs
+from search.ucs import UCS
 
 def test_ucs_algorithm():
     # 1. Load bản đồ
@@ -11,7 +11,7 @@ def test_ucs_algorithm():
 
     # 2. Khởi chạy UCS
     print("AI đang tính toán đường đi bằng UCS...")
-    path, cost = ucs(init_state, board)
+    path, cost, expanded, max_q = UCS().search(init_state, board)
 
     # 3. Chốt kết quả
     if path:

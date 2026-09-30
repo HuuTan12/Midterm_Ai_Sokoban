@@ -2,8 +2,8 @@ import time
 import os
 
 from core.map_parser import MapParser
-from search.ucs import ucs
-from search.astar import astar
+from search.ucs import UCS
+from search.astar import AStar
 
 
 def run_benchmark(map_path):
@@ -22,12 +22,12 @@ def run_benchmark(map_path):
 
     for _ in range(number_of_runs):
         start_time = time.perf_counter()
-        ucs_result = ucs(start_state, board)
+        ucs_result = UCS().search(start_state, board)
         ucs_total_time += time.perf_counter() - start_time
 
     for _ in range(number_of_runs):
         start_time = time.perf_counter()
-        astar_result = astar(start_state, board)
+        astar_result = AStar().search(start_state, board)
         astar_total_time += time.perf_counter() - start_time
 
     ucs_time = ucs_total_time / number_of_runs
