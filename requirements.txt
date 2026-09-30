@@ -1,6 +1,6 @@
-%: Tường (Obstacles/walls).
-A: Vị trí bắt đầu của nhân vật (Agent).
-B: Hộp (Boxes).
-D: Đích đến (Designated positions).
-C: Hộp đang nằm sẵn trên đích (Box on a designated point).
-Khoảng trắng (spaces): Ô trống có thể đi lại.
+# %: Tường (Obstacles/walls).
+# A: Vị trí bắt đầu của nhân vật (Agent).
+# B: Hộp (Boxes).
+# D: Đích đến (Designated positions).
+# C: Hộp đang nằm sẵn trên đích (Box on a designated point).
+# Khoảng trắng (spaces): Ô trống có thể đi lại.
