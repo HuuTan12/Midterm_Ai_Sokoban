@@ -168,10 +168,11 @@ class Renderer:
         """
         Vẽ HUD (panel thông tin phía trên).
         info : dict với các key:
-            algorithm   : str  ("ucs" / "astar")
+            algorithm   : str  ("ucs" / "astar" / "bfs" / "gbfs")
             step        : int  (bước hiện tại)
             total_steps : int  (tổng số bước)
             cost        : int  (chi phí)
+            expanded    : int  (số node đã mở rộng)
             status      : str  ("playing" / "paused" / "solved")
         """
         sw = self.screen.get_width()
@@ -180,15 +181,16 @@ class Renderer:
         step      = info.get("step", 0)
         total     = info.get("total_steps", 0)
         cost      = info.get("cost", 0)
+        expanded  = info.get("expanded", 0)
         status    = info.get("status", "paused").upper()
 
-        # Dòng 1: tên thuật toán + số bước
-        line1 = f"Thuat toan: {algo_str}   |   Buoc: {step} / {total}   |   Chi phi: {cost}"
+        # Dòng 1: tên thuật toán + số bước + số node mở rộng
+        line1 = f"{algo_str}   |   Buoc: {step} / {total}   |   Chi phi: {cost}   |   Nodes: {expanded:,}"
         surf1 = self.font_big.render(line1, True, COLOR_YELLOW)
         self.screen.blit(surf1, (20, 10))
 
-        # Dòng 2: hướng dẫn phím
-        line2 = "Space: Play/Pause   |   <-  ->: Lui/Tien buoc   |   Esc: Quay lai menu"
+        # Dòng 2: hướng dẫn phím (bổ sung Home/End / Shift)
+        line2 = "Space: Play/Pause   |   <- ->: Lui/Tien   |   Shift+<->: Dau/Cuoi   |   Home/End   |   Esc: Menu"
         surf2 = self.font_ui.render(line2, True, COLOR_GRAY)
         self.screen.blit(surf2, (20, 46))
 

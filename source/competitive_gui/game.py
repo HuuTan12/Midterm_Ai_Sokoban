@@ -92,7 +92,7 @@ class CompetitiveGameScreen:
         return walls, targets, states
 
     def handle_event(self, event):
-        """Xử lý phím Space, Left, Right và Escape."""
+        """Xử lý phím Space, Left, Right, Home, End, Shift+Left/Right và Escape."""
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 return "BACK_TO_MENU"
@@ -100,12 +100,24 @@ class CompetitiveGameScreen:
                 self.is_playing = not self.is_playing
             elif event.key == pygame.K_RIGHT:
                 self.is_playing = False
-                if self.current_step < len(self.states) - 1:
+                if event.mod & pygame.KMOD_SHIFT:
+                    # Shift+Phải → nhảy đến bước cuối
+                    self.current_step = len(self.states) - 1
+                elif self.current_step < len(self.states) - 1:
                     self.current_step += 1
             elif event.key == pygame.K_LEFT:
                 self.is_playing = False
-                if self.current_step > 0:
+                if event.mod & pygame.KMOD_SHIFT:
+                    # Shift+Trái → nhảy về bước đầu
+                    self.current_step = 0
+                elif self.current_step > 0:
                     self.current_step -= 1
+            elif event.key == pygame.K_HOME:
+                self.is_playing = False
+                self.current_step = 0
+            elif event.key == pygame.K_END:
+                self.is_playing = False
+                self.current_step = len(self.states) - 1
         return None
 
     def update(self):
@@ -284,10 +296,12 @@ class CompetitiveGameScreen:
         pygame.draw.line(self.screen, (45, 50, 80), (20, 52), (sw - 20, 52))
 
         # Dòng 2: Hướng dẫn
-        f_ui = pygame.font.SysFont("arial", 20, bold=True)
+        f_ui = pygame.font.SysFont("arial", 18, bold=True)
         hints = [
             ("Space", "Play/Pause"), ("|", ""),
             ("<- ->", "Lui/Tien buoc"), ("|", ""),
+            ("Shift+<->", "Dau/Cuoi"), ("|", ""),
+            ("Home/End", "Dau/Cuoi"), ("|", ""),
             ("Esc", "Quay lai Menu")
         ]
         x_offset, y_hint = 20, 62

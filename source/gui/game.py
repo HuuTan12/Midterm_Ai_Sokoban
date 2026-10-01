@@ -27,19 +27,16 @@ class AppState:
 class Game:
     """
     Lớp Game điều phối toàn bộ vòng lặp game theo mô hình OOP:
-      - Trạng thái MENU  → MenuScreen xử lý
-      - Trạng thái SOLVING → chạy UCS/A* trong thread riêng
+      - Trạng thái MENU    → MenuScreen xử lý
+      - Trạng thái SOLVING → chạy thuật toán trong thread riêng,
+                             thread tự build states_history rồi ghi kết quả
       - Trạng thái PLAYING → Renderer vẽ, controls điều khiển
-    Có thể dùng độc lập (gọi run()) hoặc nhúng vào app ngoài (gọi handle_event/update/draw).
+    Có thể dùng độc lập (gọi run()) hoặc nhúng vào app ngoài.
     """
 
-    PLAYBACK_SPEED_MS = 300  # Millisecond giữa mỗi bước tự động
+    PLAYBACK_SPEED_MS = 300  # ms giữa mỗi bước auto-play
 
     def __init__(self, screen: pygame.Surface, map_paths: list):
-        """
-        screen    : pygame.Surface — cửa sổ pygame từ bên ngoài truyền vào
-        map_paths : list[str]      — danh sách đường dẫn file map
-        """
         self.screen = screen
         self.clock  = pygame.time.Clock()
 
@@ -48,14 +45,17 @@ class Game:
 
         # Phát lại lời giải
         self.renderer        = None
-        self.states_history  = []   # list[State]
+        self.states_history  = []   # list[State] — được build trong worker thread
         self.current_step    = 0
         self.paused          = True
         self._last_tick      = 0
         self.result_info     = {}
 
-        # Dùng để truyền kết quả từ thread tìm kiếm
-        self._search_result  = None  # None = chưa có / tuple(path, cost, expanded, max_q) / "no_solution"
+        # Kết quả từ thread tìm kiếm:
+        #   None          → chưa có
+        #   "no_solution" → không có lời giải
+        #   dict          → có lời giải, chứa states_history + thống kê
+        self._search_result  = None
         self._search_lock    = threading.Lock()
 
     # ─────────────────────────────────────────────
@@ -63,17 +63,17 @@ class Game:
     # ─────────────────────────────────────────────
     def start_solving(self):
         from source.core.map_parser import MapParser
-        from source.search.ucs   import UCS
-        from source.search.astar import AStar
-        from source.search.bfs   import BFS
-        from source.search.gbfs  import GBFS
+        from source.core.rules      import Rules
+        from source.search.ucs      import UCS
+        from source.search.astar    import AStar
+        from source.search.bfs      import BFS
+        from source.search.gbfs     import GBFS
 
         map_path, algorithm = self.menu.get_selection()
 
         map_lines = MapParser.load_map(map_path)
         board, start_state = MapParser.parse_level(map_lines)
 
-        # Lưu lại để dùng khi vẽ
         self._board       = board
         self._start_state = start_state
         self._algorithm   = algorithm
@@ -81,6 +81,8 @@ class Game:
 
         def worker():
             t0 = time.time()
+
+            # --- Chọn solver ---
             if algorithm == "ucs":
                 solver = UCS()
             elif algorithm == "astar":
@@ -90,18 +92,48 @@ class Game:
             elif algorithm == "gbfs":
                 solver = GBFS()
             else:
-                solver = AStar()   # fallback
-            path, cost, expanded, max_q = solver.search(start_state, board, timeout_seconds=30.0)
+                solver = AStar()
+
+            path, cost, expanded, max_q = solver.search(
+                start_state, board, timeout_seconds=30.0
+            )
             elapsed = time.time() - t0
-            with self._search_lock:
-                if path is not None:
-                    self._search_result = (path, cost, expanded, max_q, elapsed)
-                else:
+
+            if path is None:
+                with self._search_lock:
                     self._search_result = "no_solution"
+                return
+
+            # --- BUILD states_history TRONG THREAD ---
+            # Tránh tình trạng poll_search_result() phải rebuild chậm trên main thread.
+            # Dùng trực tiếp Rules.apply (cùng Rules.get_successors) nhưng
+            # thực chất ta chỉ cần replay path, không cần tìm kiếm lại.
+            states = [start_state]
+            current = start_state
+            for action_str in path:
+                moved = False
+                for succ_action, succ_state in Rules.get_successors(current, board):
+                    if succ_action == action_str:
+                        states.append(succ_state)
+                        current = succ_state
+                        moved = True
+                        break
+                if not moved:
+                    # Không nên xảy ra, nhưng nếu có lỗi thì dừng lại
+                    break
+
+            with self._search_lock:
+                self._search_result = {
+                    "states"   : states,
+                    "path"     : path,
+                    "cost"     : cost,
+                    "expanded" : expanded,
+                    "max_q"    : max_q,
+                    "elapsed"  : elapsed,
+                }
 
         threading.Thread(target=worker, daemon=True).start()
         self.state = AppState.SOLVING
-
 
     # ─────────────────────────────────────────────
     # 2. Kiểm tra kết quả tìm kiếm
@@ -117,30 +149,18 @@ class Game:
             self.state = AppState.NO_SOLUTION
             return
 
-        path, cost, expanded, max_q, elapsed = result
-
-        # Xây dựng danh sách tất cả trạng thái từ đầu đến cuối
-        from source.core.rules import Rules
-        states = [self._start_state]
-        current = self._start_state
-        for action_str in path:
-            for succ_action, succ_state in Rules.get_successors(current, self._board):
-                if succ_action == action_str:
-                    states.append(succ_state)
-                    current = succ_state
-                    break
-
-        self.states_history = states
-        self.renderer = Renderer(self.screen, self._board)
-        self.current_step = 0
-        self.paused = True
-        self._last_tick = pygame.time.get_ticks()
+        # Nhận kết quả đã được build sẵn trong thread
+        self.states_history = result["states"]
+        self.renderer       = Renderer(self.screen, self._board)
+        self.current_step   = 0
+        self.paused         = True
+        self._last_tick     = pygame.time.get_ticks()
 
         self.result_info = {
             "algorithm"   : self._algorithm,
-            "total_steps" : len(path),
-            "cost"        : cost,
-            "expanded"    : expanded,
+            "total_steps" : len(result["path"]),
+            "cost"        : result["cost"],
+            "expanded"    : result["expanded"],
             "status"      : "paused",
         }
         self.state = AppState.PLAYING
@@ -181,6 +201,14 @@ class Game:
             self.paused = True
             self.current_step = max(self.current_step - 1, 0)
 
+        elif cmd == Command.JUMP_TO_START:
+            self.paused = True
+            self.current_step = 0
+
+        elif cmd == Command.JUMP_TO_END:
+            self.paused = True
+            self.current_step = len(self.states_history) - 1
+
         elif cmd == Command.BACK_TO_MENU:
             self.state = AppState.MENU
 
@@ -206,11 +234,15 @@ class Game:
             self.menu.draw()
 
         elif self.state == AppState.SOLVING:
-            self.screen.fill((30, 30, 30))
-            font = pygame.font.SysFont("arial", 30)
-            text = font.render("Dang tinh toan loi giai... Vui long doi.", True, (255, 220, 0))
+            self.screen.fill((20, 20, 45))
+            font = pygame.font.SysFont("arial", 30, bold=True)
             sw, sh = self.screen.get_size()
-            self.screen.blit(text, ((sw - text.get_width()) // 2, sh // 2 - 20))
+            text = font.render("Dang tinh toan loi giai... Vui long doi.", True, (255, 215, 0))
+            hint = pygame.font.SysFont("arial", 18).render(
+                self._algorithm.upper() + " dang chay...", True, (140, 135, 200)
+            )
+            self.screen.blit(text, ((sw - text.get_width()) // 2, sh // 2 - 30))
+            self.screen.blit(hint, ((sw - hint.get_width()) // 2, sh // 2 + 20))
 
         elif self.state == AppState.NO_SOLUTION:
             self.screen.fill((30, 30, 30))
