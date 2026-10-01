@@ -46,6 +46,24 @@ class Renderer:
         self.offset_x = max(0, (sw - map_pixel_w) // 2)
         self.offset_y = PANEL_H + max(0, (sh - PANEL_H - map_pixel_h) // 2)
 
+        # Load assets
+        import os
+        assets_dir = os.path.join(os.path.dirname(__file__), '..', 'assets')
+        
+        def load_img(name):
+            path = os.path.join(assets_dir, name)
+            if os.path.exists(path):
+                img = pygame.image.load(path).convert_alpha()
+                return pygame.transform.scale(img, (CELL_SIZE, CELL_SIZE))
+            return None
+
+        self.img_wall = load_img('wall.png')
+        self.img_floor = load_img('floor.png')
+        self.img_goal = load_img('goal.png')
+        self.img_box = load_img('box.png')
+        self.img_box_on = load_img('box_on_goal.png')
+        self.img_player = load_img('player.png')
+
     def _cell_rect(self, row, col):
         """Trả về pygame.Rect cho ô (row, col)."""
         x = self.offset_x + col * CELL_SIZE
@@ -65,20 +83,30 @@ class Renderer:
             for col in range(self.board.width):
                 pos = (row, col)
                 rect = self._cell_rect(row, col)
-                if self.board.is_wall(pos):
-                    pygame.draw.rect(self.screen, COLOR_WALL, rect)
-                    # Viền sáng cho tường (hiệu ứng 3D đơn giản)
-                    pygame.draw.rect(self.screen, (120, 120, 120), rect, 1)
+                
+                # Luôn vẽ sàn bên dưới mọi thứ
+                if self.img_floor:
+                    self.screen.blit(self.img_floor, rect)
                 else:
                     pygame.draw.rect(self.screen, COLOR_FLOOR, rect)
                     pygame.draw.rect(self.screen, (200, 195, 175), rect, 1)
-                    # Vẽ dấu X nhỏ cho ô đích
+
+                if self.board.is_wall(pos):
+                    if self.img_wall:
+                        self.screen.blit(self.img_wall, rect)
+                    else:
+                        pygame.draw.rect(self.screen, COLOR_WALL, rect)
+                        pygame.draw.rect(self.screen, (120, 120, 120), rect, 1)
+                else:
+                    # Vẽ điểm đích
                     if self.board.is_goal(pos):
-                        cx = rect.centerx
-                        cy = rect.centery
-                        r  = CELL_SIZE // 4
-                        pygame.draw.line(self.screen, COLOR_TARGET, (cx-r, cy-r), (cx+r, cy+r), 3)
-                        pygame.draw.line(self.screen, COLOR_TARGET, (cx+r, cy-r), (cx-r, cy+r), 3)
+                        if self.img_goal:
+                            self.screen.blit(self.img_goal, rect)
+                        else:
+                            cx, cy = rect.centerx, rect.centery
+                            r  = CELL_SIZE // 4
+                            pygame.draw.line(self.screen, COLOR_TARGET, (cx-r, cy-r), (cx+r, cy+r), 3)
+                            pygame.draw.line(self.screen, COLOR_TARGET, (cx+r, cy-r), (cx-r, cy+r), 3)
 
     def draw_state(self, state):
         """
@@ -90,20 +118,27 @@ class Renderer:
             row, col = bpos
             rect = self._cell_rect(row, col)
             on_goal = self.board.is_goal(bpos)
-            color   = COLOR_BOX_ON if on_goal else COLOR_BOX
-            # Vẽ hộp hơi nhỏ hơn ô để trông đẹp
-            inner = rect.inflate(-8, -8)
-            pygame.draw.rect(self.screen, color, inner, border_radius=4)
-            pygame.draw.rect(self.screen, (0, 0, 0), inner, 1, border_radius=4)
+            
+            img = self.img_box_on if on_goal else self.img_box
+            if img:
+                self.screen.blit(img, rect)
+            else:
+                color = COLOR_BOX_ON if on_goal else COLOR_BOX
+                inner = rect.inflate(-8, -8)
+                pygame.draw.rect(self.screen, color, inner, border_radius=4)
+                pygame.draw.rect(self.screen, (0, 0, 0), inner, 1, border_radius=4)
 
         # Vẽ player
         row, col = state.agent_pos
         rect = self._cell_rect(row, col)
-        cx = rect.centerx
-        cy = rect.centery
-        r  = CELL_SIZE // 2 - 6
-        pygame.draw.circle(self.screen, COLOR_PLAYER, (cx, cy), r)
-        pygame.draw.circle(self.screen, COLOR_WHITE,  (cx, cy), r, 2)
+        
+        if self.img_player:
+            self.screen.blit(self.img_player, rect)
+        else:
+            cx, cy = rect.centerx, rect.centery
+            r  = CELL_SIZE // 2 - 6
+            pygame.draw.circle(self.screen, COLOR_PLAYER, (cx, cy), r)
+            pygame.draw.circle(self.screen, COLOR_WHITE,  (cx, cy), r, 2)
 
     def draw_panel(self, info):
         """
