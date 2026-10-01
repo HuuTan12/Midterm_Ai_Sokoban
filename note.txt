@@ -1,0 +1,5 @@
+File chạy gốc (tổng hợp 2 chế độ): Nằm ngay ngoài cùng C:\Users\PC\Desktop\Midterm_AI_Sokoban\main.py
+Logic giao diện (1 Agent): Nằm trong source/gui/
+Logic giao diện (2 Agents): Nằm trong source/competitive_gui/
+Thuật toán tìm kiếm (Agent Hieu, Agent Tan, UCS, A*): Nằm trong source/search/
+Luật di chuyển: Nằm trong source/core/
