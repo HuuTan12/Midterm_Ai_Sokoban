@@ -56,7 +56,7 @@ class MainMenuScreen:
         # Ảnh nhân vật trang trí
         self._icons: list[pygame.Surface | None] = []
         for _, _, fname in self.OPTIONS:
-            path = os.path.join(assets_dir, fname)
+            path = os.path.join(assets_dir, 'sprites', fname)
             if os.path.exists(path):
                 img = pygame.image.load(path).convert_alpha()
                 self._icons.append(pygame.transform.scale(img, (54, 54)))
