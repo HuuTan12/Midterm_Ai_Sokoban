@@ -1,11 +1,17 @@
 from collections import deque
+import sys
+import os
+
+# Thêm đường dẫn gốc để import core, search
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from core.map_parser import MapParser
 from core.rules import Rules
 from search.astar import AStar
 
 
-map_lines = MapParser.load_map("maps/example_map.txt")
+map_file = os.path.join(os.path.dirname(__file__), "..", "maps", "example_map.txt")
+map_lines = MapParser.load_map(map_file)
 board, start_state = MapParser.parse_level(map_lines)
 
 

@@ -1,5 +1,9 @@
 import time
 import os
+import sys
+
+# Thêm đường dẫn gốc để import core, search
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from core.map_parser import MapParser
 from search.ucs import UCS
@@ -68,12 +72,9 @@ def run_benchmark(map_path):
 
 
 if __name__ == "__main__":
-    map_file = "maps/example_map.txt"
+    map_file = os.path.join(os.path.dirname(__file__), "..", "maps", "example_map.txt")
 
     if os.path.exists(map_file):
         run_benchmark(map_file)
     else:
-        print(
-            f"Lỗi: Không tìm thấy file {map_file}. "
-            f"Hãy chắc chắn bạn đang chạy từ thư mục 'source'."
-        )
+        print(f"Loi: Khong tim thay file {map_file}.")

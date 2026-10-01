@@ -21,21 +21,28 @@ class CompetitiveRules:
         # Lấy trạng thái hiện tại
         p1 = state.agent1_pos
         p2 = state.agent2_pos
-        
-        np1 = CompetitiveRules.get_next_pos(p1, action1)
-        np2 = CompetitiveRules.get_next_pos(p2, action2)
-        
+
+        # === FIX: Nếu một agent không tồn tại trên map thì bỏ qua agent đó ===
+        if p1 is None and p2 is None:
+            return state  # Không ai di chuyển được
+
+        np1 = CompetitiveRules.get_next_pos(p1, action1) if p1 is not None else None
+        np2 = CompetitiveRules.get_next_pos(p2, action2) if p2 is not None else None
+
         all_boxes = set(state.all_boxes)
-        
+
         # Tính toán việc đẩy hộp
-        box_push1 = None # (from, to)
+        box_push1 = None  # (from, to)
         box_push2 = None
-        
+
         # Hàm kiểm tra hợp lệ cơ bản (không tính va chạm với agent khác)
         def check_move(p, np, d, other_p):
+            # FIX: nếu vị trí hiện tại hoặc vị trí kế tiếp là None thì không làm gì
+            if p is None or np is None:
+                return p, None
             if not board.is_within_bounds(np) or board.is_wall(np):
-                return p, None # Không đi được
-            
+                return p, None  # Không đi được
+
             box_push = None
             if np in all_boxes:
                 # Muốn đẩy hộp
@@ -46,9 +53,9 @@ class CompetitiveRules:
                 box_push = (np, nbp)
             return np, box_push
 
-        d1 = CompetitiveRules.Direction_Map.get(action1, (0,0))
-        d2 = CompetitiveRules.Direction_Map.get(action2, (0,0))
-        
+        d1 = CompetitiveRules.Direction_Map.get(action1, (0, 0))
+        d2 = CompetitiveRules.Direction_Map.get(action2, (0, 0))
+
         np1, box_push1 = check_move(p1, np1, d1, p2)
         np2, box_push2 = check_move(p2, np2, d2, p1)
         
