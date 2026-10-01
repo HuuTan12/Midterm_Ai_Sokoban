@@ -17,10 +17,11 @@ from source.gui.controls import Command, map_event_to_command
 
 # ===== Các trạng thái của ứng dụng =====
 class AppState:
-    MENU       = "menu"
-    SOLVING    = "solving"   # Đang chạy thuật toán (nền)
-    PLAYING    = "playing"   # Đang phát lại lời giải
+    MENU        = "menu"
+    SOLVING     = "solving"       # Đang chạy thuật toán (nền)
+    PLAYING     = "playing"       # Đang phát lại lời giải
     NO_SOLUTION = "no_solution"
+    BACK        = "back"          # Tín hiệu quay về menu chính
 
 
 class Game:
@@ -29,15 +30,18 @@ class Game:
       - Trạng thái MENU  → MenuScreen xử lý
       - Trạng thái SOLVING → chạy UCS/A* trong thread riêng
       - Trạng thái PLAYING → Renderer vẽ, controls điều khiển
+    Có thể dùng độc lập (gọi run()) hoặc nhúng vào app ngoài (gọi handle_event/update/draw).
     """
 
     PLAYBACK_SPEED_MS = 300  # Millisecond giữa mỗi bước tự động
 
-    def __init__(self, map_paths):
-        pygame.init()
-        self.screen = pygame.display.set_mode((900, 650))
-        pygame.display.set_caption("Sokoban AI - Single Agent")
-        self.clock = pygame.time.Clock()
+    def __init__(self, screen: pygame.Surface, map_paths: list):
+        """
+        screen    : pygame.Surface — cửa sổ pygame từ bên ngoài truyền vào
+        map_paths : list[str]      — danh sách đường dẫn file map
+        """
+        self.screen = screen
+        self.clock  = pygame.time.Clock()
 
         self.state = AppState.MENU
         self.menu  = MenuScreen(self.screen, map_paths)
@@ -140,6 +144,12 @@ class Game:
             pygame.quit()
             sys.exit()
 
+        # Esc tại màn hình menu trong chế độ nhúng → gửi tín hiệu BACK về app ngoài
+        if self.state == AppState.MENU:
+            if cmd == Command.BACK_TO_MENU:
+                self.state = AppState.BACK
+            return
+
         if self.state == AppState.NO_SOLUTION:
             if cmd == Command.BACK_TO_MENU:
                 self.state = AppState.MENU
@@ -182,6 +192,7 @@ class Game:
     # 5. Vẽ frame
     # ─────────────────────────────────────────────
     def draw(self):
+        """Vẽ frame hiện tại. KHÔNG gọi pygame.display.flip() — để app ngoài gọi."""
         if self.state == AppState.MENU:
             self.menu.draw()
 
@@ -196,31 +207,27 @@ class Game:
             self.screen.fill((30, 30, 30))
             font = pygame.font.SysFont("arial", 30)
             t1 = font.render("Khong tim duoc loi giai!", True, (220, 50, 50))
-            t2 = font.render("Nhan Esc de quay lai menu.", True, (200, 200, 200))
+            t2 = font.render("Nhan Esc de quay lai menu chinh.", True, (200, 200, 200))
             sw, sh = self.screen.get_size()
             self.screen.blit(t1, ((sw - t1.get_width()) // 2, sh // 2 - 30))
             self.screen.blit(t2, ((sw - t2.get_width()) // 2, sh // 2 + 10))
 
         elif self.state == AppState.PLAYING:
-            # Xác định trạng thái hiển thị
-            total = len(self.states_history) - 1
+            total  = len(self.states_history) - 1
             at_end = (self.current_step >= total)
             status = "solved" if at_end else ("paused" if self.paused else "playing")
 
-            info = dict(self.result_info,
-                        step=self.current_step,
-                        status=status)
+            info = dict(self.result_info, step=self.current_step, status=status)
 
             self.renderer.draw_static()
             self.renderer.draw_state(self.states_history[self.current_step])
             self.renderer.draw_panel(info)
 
-        pygame.display.flip()
-
     # ─────────────────────────────────────────────
     # 6. Vòng lặp chính
     # ─────────────────────────────────────────────
     def run(self):
+        """Vòng lặp độc lập — dùng khi chạy game.py trực tiếp."""
         while True:
             now = pygame.time.get_ticks()
 
@@ -235,6 +242,10 @@ class Game:
                     cmd = map_event_to_command(event)
                     if cmd:
                         self.apply_command(cmd)
+                    # BACK trong standalone → quay về menu nội bộ
+                    if self.state == AppState.BACK:
+                        self.state = AppState.MENU
+                        self.menu.is_confirmed = False
 
             if self.state == AppState.SOLVING:
                 self.poll_search_result()
@@ -242,33 +253,25 @@ class Game:
                 self.auto_advance(now)
 
             self.draw()
+            pygame.display.flip()   # standalone: flip tại đây
             self.clock.tick(60)
 
 
 # ─────────────────────────────────────────────
-# Entry point khi chạy trực tiếp file này
+# Entry point khi chạy file này trực tiếp
 # ─────────────────────────────────────────────
 def main():
-    maps_dir = os.path.join(ROOT_DIR, "source", "maps")
-    map_paths = []
-    if os.path.exists(maps_dir):
-        for fname in sorted(os.listdir(maps_dir)):
-            if fname.endswith(".txt"):
-                map_paths.append(os.path.join(maps_dir, fname))
+    pygame.init()
+    maps_dir  = os.path.join(ROOT_DIR, "source", "maps")
+    map_paths = [
+        os.path.join(maps_dir, f)
+        for f in sorted(os.listdir(maps_dir))
+        if f.endswith(".txt")
+    ] if os.path.exists(maps_dir) else []
 
-    if not map_paths:
-        print("Khong tim thay file map nao trong source/maps/. Dang tao map mau...")
-        sample = os.path.join(maps_dir, "example_map.txt")
-        os.makedirs(maps_dir, exist_ok=True)
-        with open(sample, "w", encoding="utf-8") as f:
-            f.write("%%%%%%%\n")
-            f.write("%.....%\n")
-            f.write("%A..B.%\n")
-            f.write("%...D.%\n")
-            f.write("%%%%%%%\n")
-        map_paths = [sample]
-
-    Game(map_paths).run()
+    screen = pygame.display.set_mode((900, 650))
+    pygame.display.set_caption("Sokoban AI - Single Agent")
+    Game(screen, map_paths).run()
 
 
 if __name__ == "__main__":

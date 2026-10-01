@@ -18,7 +18,7 @@ class Board:
     
     #kiểm tra tọa độ có nằm ngoài board không
     def is_within_bounds(self, position):
-        x, y = position
-        return 0 <= x < self.width and 0 <= y < self.height 
+        row, col = position
+        return 0 <= row < self.height and 0 <= col < self.width 
     
         
