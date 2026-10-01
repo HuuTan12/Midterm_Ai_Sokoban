@@ -37,7 +37,7 @@ class CompetitiveGameScreen:
         self.last_update_time = time.time()
         self.play_speed = 0.3  # Thời gian mỗi bước khi auto-play (giây)
         
-        self.font = pygame.font.SysFont(None, 30)
+        self.font = pygame.font.SysFont("arial", 30)
 
     def parse_map(self, path):
         walls = set()
@@ -78,19 +78,23 @@ class CompetitiveGameScreen:
         return walls, targets, boxes, p1, p2
 
     def generate_states(self, initial_p1, initial_p2, initial_boxes, actions1, actions2):
-        """Mô phỏng lại quá trình di chuyển của 2 agents đồng thời."""
-        states = [(initial_p1, initial_p2, dict(initial_boxes))]
+        from core.map_parser import MapParser
+        from core.competitive_rules import CompetitiveRules
         
-        curr_p1 = initial_p1
-        curr_p2 = initial_p2
-        curr_boxes = dict(initial_boxes)
+        # Lấy file map
+        map_lines = MapParser.load_map(self.map_path)
+        board, comp_state = MapParser.parse_competitive_level(map_lines)
         
-        dir_map = {
-            'North': (0, -1), 'N': (0, -1), 'U': (0, -1),
-            'South': (0, 1), 'S': (0, 1), 'D': (0, 1),
-            'West': (-1, 0), 'W': (-1, 0), 'L': (-1, 0),
-            'East': (1, 0), 'E': (1, 0), 'R': (1, 0)
-        }
+        states = []
+        
+        def state_to_tuple(s):
+            b_dict = {}
+            for b in s.neutral_boxes: b_dict[(b[1], b[0])] = 0
+            for b in s.agent1_boxes: b_dict[(b[1], b[0])] = 1
+            for b in s.agent2_boxes: b_dict[(b[1], b[0])] = 2
+            return ((s.agent1_pos[1], s.agent1_pos[0]), (s.agent2_pos[1], s.agent2_pos[0]), b_dict)
+            
+        states.append(state_to_tuple(comp_state))
         
         max_steps = max(len(actions1), len(actions2))
         
@@ -98,40 +102,8 @@ class CompetitiveGameScreen:
             a1 = actions1[i] if i < len(actions1) else None
             a2 = actions2[i] if i < len(actions2) else None
             
-            # Logic mô phỏng ở đây cần phức tạp hơn (xử lý va chạm giữa 2 agents)
-            # Tạm thời thực hiện tuần tự P1 rồi tới P2 cho đơn giản
-            
-            # Agent 1
-            if a1 and a1 in dir_map:
-                dx, dy = dir_map[a1]
-                nx, ny = curr_p1[0] + dx, curr_p1[1] + dy
-                
-                if (nx, ny) not in self.walls and (nx, ny) != curr_p2:
-                    if (nx, ny) in curr_boxes:
-                        nnx, nny = nx + dx, ny + dy
-                        if (nnx, nny) not in self.walls and (nnx, nny) not in curr_boxes and (nnx, nny) != curr_p2:
-                            owner = curr_boxes.pop((nx, ny))
-                            curr_boxes[(nnx, nny)] = 1 # Đánh dấu hộp thuộc P1
-                            curr_p1 = (nx, ny)
-                    else:
-                        curr_p1 = (nx, ny)
-                        
-            # Agent 2
-            if a2 and a2 in dir_map:
-                dx, dy = dir_map[a2]
-                nx, ny = curr_p2[0] + dx, curr_p2[1] + dy
-                
-                if (nx, ny) not in self.walls and (nx, ny) != curr_p1:
-                    if (nx, ny) in curr_boxes:
-                        nnx, nny = nx + dx, ny + dy
-                        if (nnx, nny) not in self.walls and (nnx, nny) not in curr_boxes and (nnx, nny) != curr_p1:
-                            owner = curr_boxes.pop((nx, ny))
-                            curr_boxes[(nnx, nny)] = 2 # Đánh dấu hộp thuộc P2
-                            curr_p2 = (nx, ny)
-                    else:
-                        curr_p2 = (nx, ny)
-                        
-            states.append((curr_p1, curr_p2, dict(curr_boxes)))
+            comp_state = CompetitiveRules.apply_actions(comp_state, a1, a2, board)
+            states.append(state_to_tuple(comp_state))
             
         return states
 

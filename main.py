@@ -17,8 +17,13 @@ if __name__ == "__main__":
             from source.gui import main as gui_main
             gui_main.main()
         elif choice == '2':
+            try:
+                n_steps = int(input("Nhập số bước tối đa (n) cho trận đấu: "))
+            except ValueError:
+                n_steps = 50
+                print("Không hợp lệ, mặc định n = 50.")
             from source.competitive_gui import main as comp_main
-            comp_main.main()
+            comp_main.main(n_steps)
         else:
             print("Lựa chọn không hợp lệ.")
     except KeyboardInterrupt:

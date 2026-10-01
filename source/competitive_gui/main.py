@@ -2,40 +2,53 @@ import pygame
 import sys
 import os
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from source.gui.menu import MenuScreen
 from source.competitive_gui.game import CompetitiveGameScreen
 
-def dummy_competitive_search(map_path, algorithm):
-    """
-    Hàm giả lập trả về danh sách các hành động của 2 agents.
-    """
-    actions_p1 = ["East", "East", "South", "West", "North"]
-    actions_p2 = ["West", "West", "North", "East", "South"]
-    return actions_p1, actions_p2
+def real_competitive_search(map_path, algorithm, n_steps=50):
+    from core.map_parser import MapParser
+    from core.competitive_rules import CompetitiveRules
+    from search.agent_tan import AgentTan
+    from search.agent_hieu import AgentHieu
 
-def main():
+    map_lines = MapParser.load_map(map_path)
+    board, state = MapParser.parse_competitive_level(map_lines)
+    
+    agent1 = AgentTan()
+    agent2 = AgentHieu()
+    
+    actions1 = []
+    actions2 = []
+    
+    for i in range(n_steps):
+        a1 = agent1.get_action(state, board)
+        a2 = agent2.get_action(state, board)
+        
+        if a1 is None and a2 is None:
+            break
+        
+        actions1.append(a1)
+        actions2.append(a2)
+        
+        state = CompetitiveRules.apply_actions(state, a1, a2, board)
+        
+    return actions1, actions2
+
+def main(n_steps=50):
     pygame.init()
     screen = pygame.display.set_mode((800, 600))
     pygame.display.set_caption("Sokoban Competitive - Nhóm Hieu")
     
     clock = pygame.time.Clock()
     
-    sample_map = "example_map_competitive.txt"
-    if not os.path.exists(sample_map):
-        with open(sample_map, "w", encoding="utf-8") as f:
-            f.write(" %%%%%\n")
-            f.write("%%% %\n")
-            f.write("%D1B %\n")
-            f.write("%%% BD%\n")
-            f.write("%D%%B %\n")
-            f.write("% % D %%\n")
-            f.write("%B 2BBD%\n")
-            f.write("% D %\n")
-            f.write("%%%%%%%%\n")
-            
-    map_paths = [sample_map]
+    map_paths = []
+    maps_dir = os.path.join("source", "maps")
+    if os.path.exists(maps_dir):
+        for f in os.listdir(maps_dir):
+            if f.endswith(".txt"):
+                map_paths.append(os.path.join(maps_dir, f))
     
     current_state = "MENU"
     menu_screen = MenuScreen(screen, map_paths)
@@ -51,7 +64,8 @@ def main():
                 if menu_screen.handle_event(event):
                     selected_map, selected_algo = menu_screen.get_selection()
                     
-                    actions1, actions2 = dummy_competitive_search(selected_map, selected_algo)
+                    # Thuật toán chạy ngầm trong background với giới hạn n_steps
+                    actions1, actions2 = real_competitive_search(selected_map, selected_algo, n_steps)
                     
                     game_screen = CompetitiveGameScreen(screen, selected_map, actions1, actions2)
                     current_state = "GAME"
