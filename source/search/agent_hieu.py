@@ -17,15 +17,25 @@ class AgentHieu:
         if agent_pos is None:
             return None
 
-        boxes = comp_state.all_boxes
+        # Lấy danh sách các hộp chưa được đưa vào đích
+        unsolved_boxes = [b for b in comp_state.all_boxes if b not in board.goals]
+        if not unsolved_boxes:
+            return None
 
-        # Biến Agent 1 thành một bức tường để Agent 2 không đi xuyên qua
+        # Tìm hộp gần Agent 2 nhất
+        target_box = min(unsolved_boxes, key=lambda b: abs(b[0] - agent_pos[0]) + abs(b[1] - agent_pos[1]))
+
+        # Các hộp còn lại sẽ bị xem như bức tường để tránh đẩy nhầm
         temp_walls = set(board.walls)
         if other_agent_pos is not None:
             temp_walls.add(other_agent_pos)
-        temp_board = Board(board.width, board.height, temp_walls, board.goals)
+            
+        for b in comp_state.all_boxes:
+            if b != target_box:
+                temp_walls.add(b)
 
-        state = State(agent_pos, boxes)
+        temp_board = Board(board.width, board.height, temp_walls, board.goals)
+        state = State(agent_pos, (target_box,))
 
         # Thuật toán UCS trả về path
         path, _, _, _ = self.algo.search(state, temp_board)

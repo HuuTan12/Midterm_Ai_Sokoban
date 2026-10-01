@@ -96,8 +96,8 @@ class SokobanApp:
         maps_dir   = os.path.join(ROOT_DIR, "source", "maps")
         assets_dir = os.path.join(ROOT_DIR, "source", "assets")
         all_maps   = _get_maps(maps_dir)
-        single_maps= all_maps                               # tất cả map đều dùng được cho single
-        comp_maps  = [m for m in all_maps if _is_competitive(m)]
+        comp_maps   = [m for m in all_maps if _is_competitive(m)]
+        single_maps = [m for m in all_maps if not _is_competitive(m)]
 
         # Fonts dùng chung
         self._font_big  = pygame.font.SysFont("arial", 28, bold=True)

@@ -50,7 +50,7 @@ class CompetitiveGameScreen:
         self.img_box2_on = load_img('box2_on_goal.png')
         self.img_box_neutral = load_img('box.png')  # Dùng tạm box.png cho hộp trung lập
         self.img_player1 = load_img('player.png')
-        self.img_player2 = load_img('player.png')  # Dùng chung hình player cho cả 2 agent
+        self.img_player2 = load_img('player2.png')  # Đã đổi thành player2.png để phân biệt 2 agent
 
         # === FIX: Dùng DUY NHẤT MapParser để parse map, tránh 2 hệ tọa độ ===
         # generate_states sẽ build tất cả dữ liệu hiển thị từ CompetitiveState thật
