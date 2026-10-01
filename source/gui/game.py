@@ -61,6 +61,8 @@ class Game:
         from source.core.map_parser import MapParser
         from source.search.ucs   import UCS
         from source.search.astar import AStar
+        from source.search.bfs   import BFS
+       
 
         map_path, algorithm = self.menu.get_selection()
 
@@ -77,7 +79,9 @@ class Game:
             t0 = time.time()
             if algorithm == "ucs":
                 solver = UCS()
-            else:
+            elif algorithm == "bfs":
+                solver = BFS()
+            elif algorithm == "astar":      
                 solver = AStar()
             path, cost, expanded, max_q = solver.search(start_state, board, timeout_seconds=30.0)
             elapsed = time.time() - t0

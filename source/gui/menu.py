@@ -6,7 +6,7 @@ class MenuScreen:
         self.screen = screen
         self.map_paths = map_paths
         self.selected_map_index = 0
-        self.algorithms = ["ucs", "astar"]
+        self.algorithms = ["bfs", "dfs", "ucs", "gbfs", "astar"]
         self.selected_algo_index = 0
         self.font = pygame.font.SysFont(None, 36)
         self.title_font = pygame.font.SysFont(None, 50)
