@@ -167,13 +167,6 @@ class Renderer:
     def draw_panel(self, info):
         """
         Vẽ HUD (panel thông tin phía trên).
-        info : dict với các key:
-            algorithm   : str  ("ucs" / "astar" / "bfs" / "gbfs")
-            step        : int  (bước hiện tại)
-            total_steps : int  (tổng số bước)
-            cost        : int  (chi phí)
-            expanded    : int  (số node đã mở rộng)
-            status      : str  ("playing" / "paused" / "solved")
         """
         sw = self.screen.get_width()
 
@@ -184,22 +177,27 @@ class Renderer:
         expanded  = info.get("expanded", 0)
         status    = info.get("status", "paused").upper()
 
-        # Dòng 1: tên thuật toán + số bước + số node mở rộng
-        line1 = f"{algo_str}   |   Buoc: {step} / {total}   |   Chi phi: {cost}   |   Nodes: {expanded:,}"
-        surf1 = self.font_big.render(line1, True, COLOR_YELLOW)
-        self.screen.blit(surf1, (20, 10))
+        # Dòng 1: Tiêu đề thuật toán (Trái) & Trạng thái (Phải)
+        surf_algo = self.font_big.render(f"Thuat toan: {algo_str}", True, COLOR_YELLOW)
+        self.screen.blit(surf_algo, (20, 10))
 
-        # Dòng 2: hướng dẫn phím (bổ sung Home/End / Shift)
-        line2 = "Space: Play/Pause   |   <- ->: Lui/Tien   |   Shift+<->: Dau/Cuoi   |   Home/End   |   Esc: Menu"
-        surf2 = self.font_ui.render(line2, True, COLOR_GRAY)
-        self.screen.blit(surf2, (20, 46))
-
-        # Trạng thái play/pause (góc phải)
         status_color = COLOR_GREEN if status == "PLAYING" else COLOR_RED
-        if status == "SOLVED":
-            status_color = COLOR_YELLOW
+        if status == "SOLVED": status_color = COLOR_YELLOW
         surf_status = self.font_big.render(status, True, status_color)
-        self.screen.blit(surf_status, (sw - surf_status.get_width() - 20, 25))
+        self.screen.blit(surf_status, (sw - surf_status.get_width() - 20, 10))
+
+        # Dòng 2: Thông số chi tiết (Canh trái)
+        info_str = f"Buoc: {step} / {total}    |    Chi phi: {cost}    |    Nodes mo rong: {expanded:,}"
+        surf_info = self.font_ui.render(info_str, True, COLOR_WHITE)
+        self.screen.blit(surf_info, (20, 45))
+
+        # Đường phân cách mờ
+        pygame.draw.line(self.screen, COLOR_PANEL_BDR, (20, 75), (sw - 20, 75))
+
+        # Dòng 3: Hướng dẫn phím (Canh giữa)
+        hint_str = "Space: Play/Pause  |  <- ->: Lui/Tien  |  Shift+<->: Dau/Cuoi  |  Home/End  |  Esc: Menu"
+        surf_hint = pygame.font.SysFont("arial", 18).render(hint_str, True, COLOR_GRAY)
+        self.screen.blit(surf_hint, ((sw - surf_hint.get_width()) // 2, 82))
 
     def draw_message(self, text, color=COLOR_WHITE):
         """Vẽ một thông báo lớn ở giữa màn hình (dùng cho 'Đang tính...', 'Không có nghiệm')."""

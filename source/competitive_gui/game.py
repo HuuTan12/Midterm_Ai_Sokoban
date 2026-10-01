@@ -267,7 +267,6 @@ class CompetitiveGameScreen:
         sw = self.screen.get_width()
         panel_rect = pygame.Rect(0, 0, sw, PANEL_H)
         pygame.draw.rect(self.screen, (15, 20, 45), panel_rect)    # COLOR_PANEL_BG
-        pygame.draw.line(self.screen, (65, 65, 130), (0, PANEL_H - 1), (sw, PANEL_H - 1), 2)  # COLOR_PANEL_BDR
 
         total_steps = len(self.states) - 1
         is_ended = (self.current_step >= total_steps)
@@ -277,51 +276,49 @@ class CompetitiveGameScreen:
         score1 = sum(1 for (bx, by), owner in boxes_dict.items() if owner == 1 and (bx, by) in self.targets)
         score2 = sum(1 for (bx, by), owner in boxes_dict.items() if owner == 2 and (bx, by) in self.targets)
 
-        # Thông báo kết quả nếu kết thúc
         winner_text = ""
         if is_ended:
-            if score1 > score2:
-                winner_text = " - AGENT 1 WINS!"
-            elif score2 > score1:
-                winner_text = " - AGENT 2 WINS!"
-            else:
-                winner_text = " - DRAW!"
+            if score1 > score2: winner_text = " - AGENT 1 WINS!"
+            elif score2 > score1: winner_text = " - AGENT 2 WINS!"
+            else: winner_text = " - DRAW!"
 
-        # Dòng 1
-        line1 = f"COMPETITIVE (A* vs UCS)   |   Step: {self.current_step} / {total_steps}   |   Score: A1({score1}) - A2({score2}){winner_text}"
-        surf1 = self.font.render(line1, True, (255, 215, 0))
-        self.screen.blit(surf1, (20, 15))
+        # Dòng 1: Tiêu đề thuật toán (Trái) & Trạng thái (Phải)
+        f_title = pygame.font.SysFont("arial", 28, bold=True)
+        title_str = "COMPETITIVE MODE (A* vs UCS)" + winner_text
+        surf_title = f_title.render(title_str, True, (255, 215, 0))
+        self.screen.blit(surf_title, (20, 10))
+
+        c_status = (80, 220, 100) if status_text == "PLAYING" else ((255, 215, 0) if status_text == "SOLVED" else (220, 60, 60))
+        surf_status = f_title.render(status_text, True, c_status)
+        self.screen.blit(surf_status, (sw - surf_status.get_width() - 20, 10))
+
+        # Dòng 2: Step & Score
+        f_info = pygame.font.SysFont("arial", 22)
+        score_color1 = (100, 150, 255) # Tương đồng màu Player 1
+        score_color2 = (100, 255, 100) # Tương đồng màu Player 2
+        
+        info_txt1 = f_info.render(f"Buoc: {self.current_step} / {total_steps}    |    ", True, (255, 255, 255))
+        self.screen.blit(info_txt1, (20, 45))
+        cx = 20 + info_txt1.get_width()
+        
+        score_txt1 = f_info.render(f"A1 (Tan): {score1} diem", True, score_color1)
+        self.screen.blit(score_txt1, (cx, 45))
+        cx += score_txt1.get_width()
+        
+        sep = f_info.render("   -   ", True, (255, 255, 255))
+        self.screen.blit(sep, (cx, 45))
+        cx += sep.get_width()
+        
+        score_txt2 = f_info.render(f"A2 (Hieu): {score2} diem", True, score_color2)
+        self.screen.blit(score_txt2, (cx, 45))
 
         # Dòng phân cách mờ
-        pygame.draw.line(self.screen, (45, 50, 80), (20, 52), (sw - 20, 52))
+        pygame.draw.line(self.screen, (65, 65, 130), (20, 75), (sw - 20, 75))
 
-        # Dòng 2: Hướng dẫn
-        f_ui = pygame.font.SysFont("arial", 18, bold=True)
-        hints = [
-            ("Space", "Play/Pause"), ("|", ""),
-            ("<- ->", "Lui/Tien buoc"), ("|", ""),
-            ("Shift+<->", "Dau/Cuoi"), ("|", ""),
-            ("Home/End", "Dau/Cuoi"), ("|", ""),
-            ("Esc", "Quay lai Menu")
-        ]
-        x_offset, y_hint = 20, 62
-        for key, text in hints:
-            if key == "|":
-                surf = f_ui.render("   |   ", True, (90, 90, 145))
-                self.screen.blit(surf, (x_offset, y_hint))
-                x_offset += surf.get_width()
-            else:
-                key_surf = f_ui.render(key + ": ", True, (220, 180, 255))
-                txt_surf = f_ui.render(text, True, (140, 135, 185))
-                self.screen.blit(key_surf, (x_offset, y_hint))
-                x_offset += key_surf.get_width()
-                self.screen.blit(txt_surf, (x_offset, y_hint))
-                x_offset += txt_surf.get_width()
-
-        # Trạng thái (góc phải)
-        c_status = (80, 220, 100) if status_text == "PLAYING" else ((100, 210, 255) if status_text == "SOLVED" else (220, 60, 60))
-        surf_status = self.font.render(status_text, True, c_status)
-        self.screen.blit(surf_status, (sw - surf_status.get_width() - 20, 15))
+        # Dòng 3: Hướng dẫn phím (Canh giữa)
+        hint_str = "Space: Play/Pause  |  <- ->: Lui/Tien  |  Shift+<->: Dau/Cuoi  |  Home/End  |  Esc: Menu"
+        surf_hint = pygame.font.SysFont("arial", 18).render(hint_str, True, (140, 135, 185))
+        self.screen.blit(surf_hint, ((sw - surf_hint.get_width()) // 2, 82))
 
         # Hiển thị thông báo lớn giữa màn hình khi kết thúc
         if is_ended:
