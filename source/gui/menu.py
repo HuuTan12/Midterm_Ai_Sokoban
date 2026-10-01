@@ -42,6 +42,16 @@ _ALGO_META  = {
         "full":  "A* (Chebyshev Heuristic)",
         "note":  "Tim kiem co huong dan boi heuristic",
     },
+    "bfs": {
+        "label": "BFS",
+        "full":  "Breadth-First Search",
+        "note":  "Tim duong ngan nhat theo so buoc",
+    },
+    "gbfs": {
+        "label": "GBFS",
+        "full":  "Greedy Best-First Search",
+        "note":  "Tham lam theo heuristic, nhanh nhung khong toi uu",
+    },
 }
 
 
@@ -57,7 +67,7 @@ class MenuScreen:
         self.screen             = screen
         self.map_paths          = map_paths
         self.selected_map_index = 0
-        self.algorithms         = ["ucs", "astar"]
+        self.algorithms         = ["ucs", "astar", "bfs", "gbfs"]
         self.selected_algo_index= 0
         self.is_confirmed       = False
 
@@ -210,7 +220,15 @@ class MenuScreen:
                 self.screen.blit(arrow, (ROW_X + ROW_W - 22, ty))
 
         # ── Panel THUẬT TOÁN (cột phải) ──
-        ALGO_PANEL_H = 240
+        # Tính chiều cao panel động theo số thuật toán
+        ABTN_H = 52          # chiều cao mỗi nút (giảm để vừa 4 nút)
+        ABTN_GAP = 6         # khoảng cách giữa các nút
+        ABTN_W = RIGHT_W - 20
+        ABTN_X = RIGHT_X + 10
+        n_algos = len(self.algorithms)
+        ALGO_HEADER_H = 40   # tiêu đề + divider
+        ALGO_PANEL_H = ALGO_HEADER_H + 12 + n_algos * (ABTN_H + ABTN_GAP) + 4
+
         algo_panel = pygame.Rect(RIGHT_X, CONTENT_Y, RIGHT_W, ALGO_PANEL_H)
         pygame.draw.rect(self.screen, _PANEL_BG, algo_panel, border_radius=16)
         pygame.draw.rect(self.screen, _PANEL_BDR, algo_panel, 1, border_radius=16)
@@ -223,15 +241,12 @@ class MenuScreen:
                          (RIGHT_X + 12, ALGO_DIV_Y),
                          (RIGHT_X + RIGHT_W - 12, ALGO_DIV_Y))
 
-        ABTN_H = 70
-        ABTN_W = RIGHT_W - 20
-        ABTN_X = RIGHT_X + 10
         ABTN_Y_START = ALGO_DIV_Y + 12
         self._algo_rects = []
 
         for i, algo_key in enumerate(self.algorithms):
             meta = _ALGO_META.get(algo_key, {"label": algo_key.upper(), "full": "", "note": ""})
-            ay   = ABTN_Y_START + i * (ABTN_H + 10)
+            ay   = ABTN_Y_START + i * (ABTN_H + ABTN_GAP)
             arect = pygame.Rect(ABTN_X, ay, ABTN_W, ABTN_H)
             self._algo_rects.append(arect)
 
@@ -255,9 +270,9 @@ class MenuScreen:
             full = self.f_note.render(meta["full"],  True, txt_c)
             note = self.f_note.render(meta["note"],  True, note_c)
 
-            self.screen.blit(lbl,  (ABTN_X + 14, ay + 8))
-            self.screen.blit(full, (ABTN_X + 14, ay + 32))
-            self.screen.blit(note, (ABTN_X + 14, ay + 50))
+            self.screen.blit(lbl,  (ABTN_X + 14, ay + 5))
+            self.screen.blit(full, (ABTN_X + 14, ay + 24))
+            self.screen.blit(note, (ABTN_X + 14, ay + 38))
 
             if is_sel:
                 ck = self.f_algo.render("✓", True, _GOLD)
