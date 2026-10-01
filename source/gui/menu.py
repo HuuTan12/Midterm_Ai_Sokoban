@@ -8,8 +8,8 @@ class MenuScreen:
         self.selected_map_index = 0
         self.algorithms = ["ucs", "astar"]
         self.selected_algo_index = 0
-        self.font = pygame.font.SysFont(None, 36)
-        self.title_font = pygame.font.SysFont(None, 50)
+        self.font = pygame.font.SysFont("arial", 20)
+        self.title_font = pygame.font.SysFont("arial", 28)
         self.is_confirmed = False
 
     def handle_event(self, event):
@@ -37,11 +37,13 @@ class MenuScreen:
         self.screen.blit(title_surf, (50, 30))
 
         # Hướng dẫn
-        guide_surf = self.font.render("Dùng phím Lên/Xuống để chọn Map, Trái/Phải để chọn Thuật toán. Nhấn Enter để bắt đầu.", True, (150, 150, 150))
-        self.screen.blit(guide_surf, (50, 80))
+        guide_surf1 = self.font.render("Dùng phím Lên/Xuống để chọn Map, Trái/Phải để chọn Thuật toán.", True, (150, 150, 150))
+        self.screen.blit(guide_surf1, (50, 70))
+        guide_surf2 = self.font.render("Nhấn Enter để bắt đầu.", True, (150, 150, 150))
+        self.screen.blit(guide_surf2, (50, 100))
 
         # Vẽ danh sách Map
-        y_offset = 150
+        y_offset = 160
         map_title = self.font.render("BẢN ĐỒ (MAPS):", True, (200, 200, 255))
         self.screen.blit(map_title, (50, y_offset - 40))
 
@@ -58,7 +60,7 @@ class MenuScreen:
 
         algo_text = f"<  {self.algorithms[self.selected_algo_index].upper()}  >"
         algo_surf = self.font.render(algo_text, True, (255, 255, 0))
-        self.screen.blit(algo_surf, (250, y_algo_offset))
+        self.screen.blit(algo_surf, (320, y_algo_offset))
 
     def get_selection(self):
         """Trả về tuple(map_path, algorithm) đã chọn."""

@@ -24,12 +24,11 @@ class Game:
         self.renderer = None
         self.states_history = []
         self.current_step = 0
-        self.paused = True
-        self.playback_speed_ms = 400
-        self._last_tick = 0
-        self.result_info = {}
-        self._search_thread = None
-        self._search_result_queue = queue.Queue()
+        self.is_playing = False
+        self.last_update_time = time.time()
+        self.play_speed = 0.3  # Thời gian mỗi bước khi auto-play (giây)
+        
+        self.font = pygame.font.SysFont("arial", 30)
 
     def start_solving(self):
         map_path, algorithm = self.menu.get_selection()
