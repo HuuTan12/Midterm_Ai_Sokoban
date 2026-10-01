@@ -192,10 +192,16 @@ class SokobanApp:
             if self._game.state == AppState.MENU:
                 if event.type == pygame.QUIT:
                     pygame.quit(); sys.exit()
+                # Esc tại màn chọn map/thuật toán → quay về Main Menu
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    self._go_main_menu()
+                    return
                 confirmed = self._game.menu.handle_event(event)
                 if confirmed:
                     self._game.start_solving()
             else:
+                # Esc tại màn hình game (PLAYING/SOLVING/NO_SOLUTION)
+                # → apply_command sẽ set state = MENU (quay về chọn map)
                 cmd = map_event_to_command(event)
                 if cmd:
                     self._game.apply_command(cmd)
@@ -207,7 +213,7 @@ class SokobanApp:
                 if confirmed:
                     map_path, algo = self._comp_menu.get_selection()
                     self._start_comp_solving(map_path, algo)
-            # Esc quay lại main menu
+            # Esc tại màn chọn map competitive → quay về Main Menu
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 self._go_main_menu()
 
@@ -216,7 +222,8 @@ class SokobanApp:
             if self._comp_game:
                 result = self._comp_game.handle_event(event)
                 if result == "BACK_TO_MENU":
-                    self._go_main_menu()
+                    # Esc trong game competitive → quay về chọn map competitive
+                    self._go_comp_menu()
 
     # ── Cập nhật logic ─────────────────────────────────────────────────
     def _update(self, now_ms: int):

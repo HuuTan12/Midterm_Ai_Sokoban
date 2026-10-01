@@ -8,15 +8,21 @@ COLOR_TARGET    = (220,  60,  60)   # Đích đỏ
 COLOR_BOX       = (200, 130,  50)   # Hộp chưa vào đích (nâu)
 COLOR_BOX_ON    = (100,  60,  20)   # Hộp đã vào đích (nâu đậm)
 COLOR_PLAYER    = ( 50,  80, 200)   # Người chơi xanh dương
-COLOR_PANEL_BG  = ( 30,  30,  30)   # Nền panel HUD
 COLOR_WHITE     = (255, 255, 255)
-COLOR_YELLOW    = (255, 220,   0)
-COLOR_GREEN     = ( 50, 220,  50)
-COLOR_GRAY      = (160, 160, 160)
-COLOR_RED       = (220,  50,  50)
 
-CELL_SIZE = 48  # Kích thước mỗi ô (pixel)
-PANEL_H   = 90  # Chiều cao panel HUD phía trên
+# ── Tone màu panel HUD (đồng bộ với menu navy/tím) ──
+COLOR_PANEL_BG  = ( 15,  20,  45)   # Nền HUD: navy đậm
+COLOR_PANEL_BDR = ( 65,  65, 130)   # Viền HUD
+COLOR_YELLOW    = (255, 215,   0)   # Vàng gold (tiêu đề, thông số)
+COLOR_GREEN     = ( 80, 220, 100)   # Xanh lá (PLAYING)
+COLOR_GRAY      = (140, 135, 185)   # Tím nhạt (ghi chú)
+COLOR_RED       = (220,  60,  60)   # Đỏ (PAUSED / lỗi)
+COLOR_CYAN      = (100, 210, 255)   # Xanh nhạt (SOLVED)
+COLOR_HINT_KEY  = (220, 180, 255)   # Tím nhạt sáng (tên phím)
+COLOR_HINT_TXT  = ( 90,  90, 145)   # Xám tím (phân cách |)
+
+CELL_SIZE = 48   # Kích thước mỗi ô (pixel)
+PANEL_H   = 105  # Chiều cao panel HUD (tăng để chứa 3 dòng + ghi chú)
 
 
 class Renderer:
