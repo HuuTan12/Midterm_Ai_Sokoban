@@ -82,6 +82,7 @@ class SokobanApp:
     S_MAIN_MENU   = "main_menu"
     S_SINGLE      = "single"         # Game object tự quản lý sub-state
     S_COMP_MENU   = "comp_menu"
+    S_COMP_INPUT  = "comp_input"
     S_COMP_SOLVE  = "comp_solving"
     S_COMP_GAME   = "comp_game"
 
@@ -111,6 +112,9 @@ class SokobanApp:
         self._comp_game                                 = None
         self._comp_thread: threading.Thread | None      = None
         self._comp_result                               = None  # (actions1, actions2, map_path)
+        
+        self._input_text = ""
+        self._selected_map_algo = None
 
         self._state = self.S_MAIN_MENU
 
@@ -134,7 +138,7 @@ class SokobanApp:
         self._comp_menu = MenuScreen(self.screen, self._comp_maps)
         self._state = self.S_COMP_MENU
 
-    def _start_comp_solving(self, map_path: str, algorithm: str):
+    def _start_comp_solving(self, map_path: str, algorithm: str, n_steps: int):
         """Chạy thuật toán competitive trong thread nền."""
         self._comp_result = None
         self._state       = self.S_COMP_SOLVE
@@ -151,7 +155,7 @@ class SokobanApp:
             agent1, agent2 = AgentTan(), AgentHieu()
             actions1, actions2 = [], []
 
-            for _ in range(60):
+            for _ in range(n_steps):
                 a1 = agent1.get_action(state, board)
                 a2 = agent2.get_action(state, board)
                 if a1 is None and a2 is None:
@@ -208,11 +212,31 @@ class SokobanApp:
             if self._comp_menu:
                 confirmed = self._comp_menu.handle_event(event)
                 if confirmed:
-                    map_path, algo = self._comp_menu.get_selection()
-                    self._start_comp_solving(map_path, algo)
+                    self._selected_map_algo = self._comp_menu.get_selection()
+                    self._input_text = ""
+                    self._state = self.S_COMP_INPUT
             # Esc quay lại main menu
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 self._go_main_menu()
+
+        # ── Competitive Input N ──
+        elif self._state == self.S_COMP_INPUT:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    try:
+                        n = int(self._input_text)
+                        if n <= 0: raise ValueError
+                    except ValueError:
+                        n = 60 # Mặc định
+                    map_path, algo = self._selected_map_algo
+                    self._start_comp_solving(map_path, algo, n)
+                elif event.key == pygame.K_BACKSPACE:
+                    self._input_text = self._input_text[:-1]
+                elif event.key == pygame.K_ESCAPE:
+                    self._state = self.S_COMP_MENU
+                else:
+                    if event.unicode.isdigit():
+                        self._input_text += event.unicode
 
         # ── Comp Game ──
         elif self._state == self.S_COMP_GAME:
@@ -254,6 +278,23 @@ class SokobanApp:
 
         elif self._state == self.S_COMP_MENU and self._comp_menu:
             self._comp_menu.draw()
+            
+        elif self._state == self.S_COMP_INPUT:
+            self.screen.fill((40, 40, 50))
+            sw, sh = self.screen.get_size()
+            
+            prompt = self._font_big.render("Nhap so buoc (N) toi da cho 2 Agent (Mac dinh: 60):", True, (255, 255, 255))
+            self.screen.blit(prompt, (sw//2 - prompt.get_width()//2, sh//2 - 60))
+            
+            input_rect = pygame.Rect(sw//2 - 100, sh//2 - 10, 200, 50)
+            pygame.draw.rect(self.screen, (20, 20, 30), input_rect)
+            pygame.draw.rect(self.screen, (255, 255, 0), input_rect, 2)
+            
+            txt_surface = self._font_big.render(self._input_text + "_", True, (255, 255, 0))
+            self.screen.blit(txt_surface, (input_rect.x + 10, input_rect.y + 10))
+            
+            hint = self._font_hint.render("An ENTER de bat dau, ESC de quay lai", True, (150, 150, 150))
+            self.screen.blit(hint, (sw//2 - hint.get_width()//2, sh//2 + 60))
 
         elif self._state == self.S_COMP_SOLVE:
             _draw_loading(self.screen, self._font_big)

@@ -30,16 +30,27 @@ class CompetitiveGameScreen:
         self.actions1 = actions1
         self.actions2 = actions2
 
-        # Initialize image placeholders to avoid AttributeError
-        self.img_wall = None
-        self.img_goal = None
-        self.img_box1 = None
-        self.img_box1_on = None
-        self.img_box2 = None
-        self.img_box2_on = None
-        self.img_box_neutral = None
-        self.img_player1 = None
-        self.img_player2 = None
+        import os
+        assets_dir = os.path.join(os.path.dirname(__file__), '..', 'assets')
+        
+        def load_img(name):
+            path = os.path.join(assets_dir, name)
+            if os.path.exists(path):
+                img = pygame.image.load(path).convert_alpha()
+                return pygame.transform.scale(img, (CELL_SIZE, CELL_SIZE))
+            return None
+
+        # Tải hình ảnh để giao diện đẹp như 1 agent
+        self.img_wall = load_img('wall.png')
+        self.img_floor = load_img('floor.png')
+        self.img_goal = load_img('goal.png')
+        self.img_box1 = load_img('box.png')
+        self.img_box1_on = load_img('box_on_goal.png')
+        self.img_box2 = load_img('box2.png')
+        self.img_box2_on = load_img('box2_on_goal.png')
+        self.img_box_neutral = load_img('box.png')  # Dùng tạm box.png cho hộp trung lập
+        self.img_player1 = load_img('player.png')
+        self.img_player2 = load_img('player.png')  # Dùng chung hình player cho cả 2 agent
 
         # === FIX: Dùng DUY NHẤT MapParser để parse map, tránh 2 hệ tọa độ ===
         # generate_states sẽ build tất cả dữ liệu hiển thị từ CompetitiveState thật
@@ -143,6 +154,16 @@ class CompetitiveGameScreen:
         offset_x = max(0, (sw - map_w) // 2)
         offset_y = 100 + max(0, (sh - 100 - map_h) // 2)
         
+        # Vẽ sàn
+        for wx in range(max_wx + 1):
+            for wy in range(max_wy + 1):
+                rect = (offset_x + wx * CELL_SIZE, offset_y + wy * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                if self.img_floor:
+                    self.screen.blit(self.img_floor, rect)
+                else:
+                    pygame.draw.rect(self.screen, (220, 210, 185), rect)
+                    pygame.draw.rect(self.screen, (200, 195, 175), rect, 1)
+
         # Vẽ tường
         for wx, wy in self.walls:
             rect = (offset_x + wx * CELL_SIZE, offset_y + wy * CELL_SIZE, CELL_SIZE, CELL_SIZE)
@@ -158,7 +179,8 @@ class CompetitiveGameScreen:
             if self.img_goal:
                 self.screen.blit(self.img_goal, rect)
             else:
-                cx, cy = rect.centerx, rect.centery
+                cx = offset_x + tx * CELL_SIZE + CELL_SIZE // 2
+                cy = offset_y + ty * CELL_SIZE + CELL_SIZE // 2
                 r = CELL_SIZE // 4
                 pygame.draw.line(self.screen, TARGET_COLOR, (cx-r, cy-r), (cx+r, cy+r), 3)
                 pygame.draw.line(self.screen, TARGET_COLOR, (cx+r, cy-r), (cx-r, cy+r), 3)
