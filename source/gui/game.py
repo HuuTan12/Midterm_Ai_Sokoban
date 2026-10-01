@@ -35,7 +35,7 @@ class Game:
 
     def __init__(self, map_paths):
         pygame.init()
-        self.screen = pygame.display.set_mode((900, 650))
+        self.screen = pygame.display.set_mode((1280, 780))
         pygame.display.set_caption("Sokoban AI - Single Agent")
         self.clock = pygame.time.Clock()
 

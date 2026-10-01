@@ -20,7 +20,7 @@ NEUTRAL_BOX_COLOR = (205, 133, 63)  # Hộp trung lập chưa ai chạm vào
 
 TEXT_COLOR = (0, 0, 0)
 
-CELL_SIZE = 40
+CELL_SIZE = 64
 
 class CompetitiveGameScreen:
     def __init__(self, screen, map_path, actions1, actions2):
@@ -140,7 +140,13 @@ class CompetitiveGameScreen:
         
         p1_pos, p2_pos, boxes_dict = self.states[self.current_step]
         
-        offset_x, offset_y = 50, 100
+        sw, sh = self.screen.get_size()
+        max_wx = max([wx for wx, wy in self.walls]) if self.walls else 10
+        max_wy = max([wy for wx, wy in self.walls]) if self.walls else 10
+        map_w = (max_wx + 1) * CELL_SIZE
+        map_h = (max_wy + 1) * CELL_SIZE
+        offset_x = max(0, (sw - map_w) // 2)
+        offset_y = 100 + max(0, (sh - 100 - map_h) // 2)
         
         # Vẽ tường
         for wx, wy in self.walls:
@@ -178,12 +184,30 @@ class CompetitiveGameScreen:
 
         # UI thông tin
         total_steps = len(self.states) - 1
-        info_text = f"Step: {self.current_step} / {total_steps}"
+        
+        # Calculate Scores
+        score1 = sum(1 for (bx, by), owner in boxes_dict.items() if owner == 1 and (bx, by) in self.targets)
+        score2 = sum(1 for (bx, by), owner in boxes_dict.items() if owner == 2 and (bx, by) in self.targets)
+        
+        # Win Declaration
+        if self.current_step >= total_steps:
+            if score1 > score2:
+                status_text = "FINISHED - AGENT 1 (XANH DUONG) WINS!"
+                status_color = (0, 0, 255)
+            elif score2 > score1:
+                status_text = "FINISHED - AGENT 2 (XANH LA) WINS!"
+                status_color = (0, 150, 0)
+            else:
+                status_text = "FINISHED - TIE!"
+                status_color = (200, 150, 0)
+        else:
+            status_text = "PLAYING" if self.is_playing else "PAUSED"
+            status_color = TEXT_COLOR
             
-        status_text = "PLAYING" if self.is_playing else "PAUSED"
+        info_text = f"Step: {self.current_step} / {total_steps} | P1 Score: {score1} | P2 Score: {score2}"
         
         ui_surf1 = self.font.render(info_text, True, TEXT_COLOR)
-        ui_surf2 = self.font.render(f"Trạng thái: {status_text} (Space: Play/Pause | Left/Right: Step | Esc: Back)", True, TEXT_COLOR)
+        ui_surf2 = self.font.render(f"Trạng thái: {status_text} (Space: Play | Left/Right: Step | Esc: Menu)", True, status_color)
         
         self.screen.blit(ui_surf1, (20, 20))
         self.screen.blit(ui_surf2, (20, 60))

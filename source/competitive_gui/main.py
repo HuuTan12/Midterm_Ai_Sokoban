@@ -10,6 +10,7 @@ sys.path.insert(0, SRC_DIR)
 
 from source.gui.menu import MenuScreen
 from source.competitive_gui.game import CompetitiveGameScreen
+import threading
 
 
 def is_competitive_map(map_path):
@@ -54,7 +55,7 @@ def real_competitive_search(map_path, algorithm, n_steps=50):
 
 def main(n_steps=50):
     pygame.init()
-    screen = pygame.display.set_mode((800, 600))
+    screen = pygame.display.set_mode((1280, 720))
     pygame.display.set_caption("Sokoban Competitive - Nhom Hieu")
 
     clock = pygame.time.Clock()
@@ -78,6 +79,10 @@ def main(n_steps=50):
     current_state = "MENU"
     menu_screen = MenuScreen(screen, map_paths)
     game_screen = None
+    
+    search_result = None
+    search_lock = threading.Lock()
+    selected_map = None
 
     running = True
     while running:
@@ -89,11 +94,15 @@ def main(n_steps=50):
                 if menu_screen.handle_event(event):
                     selected_map, selected_algo = menu_screen.get_selection()
 
-                    # Thuật toán chạy ngầm trong background với giới hạn n_steps
-                    actions1, actions2 = real_competitive_search(selected_map, selected_algo, n_steps)
-
-                    game_screen = CompetitiveGameScreen(screen, selected_map, actions1, actions2)
-                    current_state = "GAME"
+                    def worker(m_path, algo, steps):
+                        res = real_competitive_search(m_path, algo, steps)
+                        with search_lock:
+                            nonlocal search_result
+                            search_result = res
+                    
+                    search_result = None
+                    current_state = "SOLVING"
+                    threading.Thread(target=worker, args=(selected_map, selected_algo, n_steps), daemon=True).start()
 
             elif current_state == "GAME":
                 action_result = game_screen.handle_event(event)
@@ -101,8 +110,21 @@ def main(n_steps=50):
                     current_state = "MENU"
                     menu_screen.is_confirmed = False
 
+        if current_state == "SOLVING":
+            with search_lock:
+                if search_result is not None:
+                    actions1, actions2 = search_result
+                    game_screen = CompetitiveGameScreen(screen, selected_map, actions1, actions2)
+                    current_state = "GAME"
+
         if current_state == "MENU":
             menu_screen.draw()
+        elif current_state == "SOLVING":
+            screen.fill((30, 30, 30))
+            font = pygame.font.SysFont("arial", 30)
+            text = font.render("Dang tinh toan loi giai 2 agents... Vui long doi.", True, (255, 220, 0))
+            sw, sh = screen.get_size()
+            screen.blit(text, ((sw - text.get_width()) // 2, sh // 2 - 20))
         elif current_state == "GAME":
             game_screen.update()
             game_screen.draw()

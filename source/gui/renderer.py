@@ -15,7 +15,7 @@ COLOR_GREEN     = ( 50, 220,  50)
 COLOR_GRAY      = (160, 160, 160)
 COLOR_RED       = (220,  50,  50)
 
-CELL_SIZE = 48  # Kích thước mỗi ô (pixel)
+CELL_SIZE = 64  # Kích thước mỗi ô (pixel)
 PANEL_H   = 90  # Chiều cao panel HUD phía trên
 
 
