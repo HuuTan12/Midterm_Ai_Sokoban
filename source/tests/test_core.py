@@ -1,34 +1,30 @@
+import unittest
 import os
+import sys
+
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, base_dir)
+
 from core.map_parser import MapParser
 from core.rules import Rules
 
+class TestCore(unittest.TestCase):
+    def setUp(self):
+        self.map_path = os.path.join(base_dir, "maps", "example_map.txt")
+        self.lines = MapParser.load_map(self.map_path)
+        self.board, self.state = MapParser.parse_level(self.lines)
 
-# 1. Đọc file map
-base_dir = os.path.dirname(os.path.abspath(__file__))
-map_path = os.path.join(base_dir, "maps", "example_map.txt")
-lines = MapParser.load_map(map_path)
+    def test_parse_level(self):
+        self.assertTrue(self.board.width > 0)
+        self.assertTrue(self.board.height > 0)
+        self.assertTrue(len(self.board.walls) > 0)
+        self.assertTrue(len(self.board.goals) > 0)
+        self.assertIsNotNone(self.state.agent_pos)
+        self.assertTrue(len(self.state.boxes) > 0)
 
-# 2. Parse map thành Board và State
-board, state = MapParser.parse_level(lines)
+    def test_get_successors(self):
+        successors = Rules.get_successors(self.state, self.board)
+        self.assertIsInstance(successors, list)
 
-# 3. In thông tin để kiểm tra
-print("=== BOARD ===")
-print("Width:", board.width)
-print("Height:", board.height)
-print("Walls:", board.walls)
-print("Goals:", board.goals)
-
-print("\n=== STATE ===")
-print("Agent:", state.agent_pos)
-print("Boxes:", state.boxes)
-
-# 4. Sinh các trạng thái kế tiếp
-successors = Rules.get_successors(state, board)
-
-print("\n=== SUCCESSORS ===")
-
-for action, new_state in successors:
-    print("Action:", action)
-    print("Agent:", new_state.agent_pos)
-    print("Boxes:", new_state.boxes)
-    print("---")
+if __name__ == '__main__':
+    unittest.main()

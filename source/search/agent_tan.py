@@ -23,8 +23,13 @@ class AgentTan:
         if not unsolved_boxes:
             return None
 
-        # Tìm hộp gần Agent 1 nhất
-        target_box = min(unsolved_boxes, key=lambda b: abs(b[0] - agent_pos[0]) + abs(b[1] - agent_pos[1]))
+        # Ưu tiên hộp của mình trước (nếu có hộp của mình chưa vào đích)
+        my_unsolved = [b for b in unsolved_boxes if b in comp_state.agent1_boxes]
+        candidates = my_unsolved if my_unsolved else unsolved_boxes
+
+        # Tìm hộp gần Agent 1 nhất. 
+        # Tie-breaker: chọn hộp ở phía trên (row nhỏ nhất) để tránh 2 agent chọn cùng hộp gây deadlock
+        target_box = min(candidates, key=lambda b: (abs(b[0] - agent_pos[0]) + abs(b[1] - agent_pos[1]), b[0], b[1]))
 
         # Các hộp còn lại sẽ bị xem như bức tường để tránh đẩy nhầm
         temp_walls = set(board.walls)

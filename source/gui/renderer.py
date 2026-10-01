@@ -8,25 +8,25 @@ COLOR_TARGET    = (220,  60,  60)   # Đích đỏ
 COLOR_BOX       = (200, 130,  50)   # Hộp chưa vào đích (nâu)
 COLOR_BOX_ON    = (100,  60,  20)   # Hộp đã vào đích (nâu đậm)
 COLOR_PLAYER    = ( 50,  80, 200)   # Người chơi xanh dương
-COLOR_PANEL_BG  = ( 30,  30,  30)   # Nền panel HUD
 COLOR_WHITE     = (255, 255, 255)
-COLOR_YELLOW    = (255, 220,   0)
-COLOR_GREEN     = ( 50, 220,  50)
-COLOR_GRAY      = (160, 160, 160)
-COLOR_RED       = (220,  50,  50)
 
-CELL_SIZE = 64  # Kích thước mỗi ô (pixel)
-PANEL_H   = 90  # Chiều cao panel HUD phía trên
+# ── Tone màu panel HUD (đồng bộ với menu navy/tím) ──
+COLOR_PANEL_BG  = ( 15,  20,  45)   # Nền HUD: navy đậm
+COLOR_PANEL_BDR = ( 65,  65, 130)   # Viền HUD
+COLOR_YELLOW    = (255, 215,   0)   # Vàng gold (tiêu đề, thông số)
+COLOR_GREEN     = ( 80, 220, 100)   # Xanh lá (PLAYING)
+COLOR_GRAY      = (140, 135, 185)   # Tím nhạt (ghi chú)
+COLOR_RED       = (220,  60,  60)   # Đỏ (PAUSED / lỗi)
+COLOR_CYAN      = (100, 210, 255)   # Xanh nhạt (SOLVED)
+COLOR_HINT_KEY  = (220, 180, 255)   # Tím nhạt sáng (tên phím)
+COLOR_HINT_TXT  = ( 90,  90, 145)   # Xám tím (phân cách |)
 
+PANEL_H   = 105  # Chiều cao panel HUD (tăng để chứa 3 dòng + ghi chú)
 
 class Renderer:
     """
     Lớp Renderer: chịu trách nhiệm vẽ toàn bộ game lên màn hình.
     Tách rời việc vẽ ra khỏi logic thuật toán (đúng nguyên tắc OOP).
-
-    Hệ tọa độ nội bộ: (row, col) theo chuẩn của core/.
-      - screen_x = PANEL_OFFSET_X + col * CELL_SIZE
-      - screen_y = PANEL_H + row * CELL_SIZE
     """
 
     def __init__(self, screen, board):
@@ -39,10 +39,21 @@ class Renderer:
         self.font_ui    = pygame.font.SysFont("arial", 22)
         self.font_big   = pygame.font.SysFont("arial", 28, bold=True)
 
-        # Tự động căn giữa map trên màn hình
         sw, sh = screen.get_size()
-        map_pixel_w = board.width  * CELL_SIZE
-        map_pixel_h = board.height * CELL_SIZE
+        
+        # Tự động tính kích thước ô (cell_size) để map vừa với màn hình
+        max_w = sw - 40  # padding 20px mỗi bên
+        max_h = sh - PANEL_H - 40
+        
+        # Tính kích thước ô tối đa, chặn ở mức 64px để không quá to
+        if board.width > 0 and board.height > 0:
+            self.cell_size = min(max_w // board.width, max_h // board.height, 64)
+        else:
+            self.cell_size = 48
+
+        map_pixel_w = board.width  * self.cell_size
+        map_pixel_h = board.height * self.cell_size
+        
         self.offset_x = max(0, (sw - map_pixel_w) // 2)
         self.offset_y = PANEL_H + max(0, (sh - PANEL_H - map_pixel_h) // 2)
 
@@ -50,29 +61,42 @@ class Renderer:
         import os
         assets_dir = os.path.join(os.path.dirname(__file__), '..', 'assets')
         
-        def load_img(name):
-            path = os.path.join(assets_dir, name)
+        def load_img(subfolder, name):
+            path = os.path.join(assets_dir, subfolder, name)
             if os.path.exists(path):
                 img = pygame.image.load(path).convert_alpha()
-                return pygame.transform.scale(img, (CELL_SIZE, CELL_SIZE))
+                return pygame.transform.scale(img, (self.cell_size, self.cell_size))
             return None
 
-        self.img_wall = load_img('wall.png')
-        self.img_floor = load_img('floor.png')
-        self.img_goal = load_img('goal.png')
-        self.img_box = load_img('box.png')
-        self.img_box_on = load_img('box_on_goal.png')
-        self.img_player = load_img('player.png')
+        self.img_wall = load_img('tiles', 'wall.png')
+        self.img_floor = load_img('tiles', 'floor.png')
+        self.img_goal = load_img('tiles', 'goal.png')
+        self.img_box = load_img('tiles', 'box.png')
+        self.img_box_on = load_img('tiles', 'box_on_goal.png')
+        self.img_player = load_img('sprites', 'player.png')
+
+        # Load background
+        bg_path = os.path.join(assets_dir, 'backgrounds', 'bg_main.jpg')
+        if os.path.exists(bg_path):
+            bg_img = pygame.image.load(bg_path).convert()
+            # Scale background to fit screen
+            sw, sh = screen.get_size()
+            self.img_bg = pygame.transform.scale(bg_img, (sw, sh))
+        else:
+            self.img_bg = None
 
     def _cell_rect(self, row, col):
         """Trả về pygame.Rect cho ô (row, col)."""
-        x = self.offset_x + col * CELL_SIZE
-        y = self.offset_y + row * CELL_SIZE
-        return pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
+        x = self.offset_x + col * self.cell_size
+        y = self.offset_y + row * self.cell_size
+        return pygame.Rect(x, y, self.cell_size, self.cell_size)
 
     def draw_static(self):
         """Vẽ nền, tường và ô đích — những thứ không thay đổi theo bước."""
-        self.screen.fill(COLOR_BG)
+        if self.img_bg:
+            self.screen.blit(self.img_bg, (0, 0))
+        else:
+            self.screen.fill(COLOR_BG)
 
         # Vẽ nền panel HUD
         panel_rect = pygame.Rect(0, 0, self.screen.get_width(), PANEL_H)
@@ -104,7 +128,7 @@ class Renderer:
                             self.screen.blit(self.img_goal, rect)
                         else:
                             cx, cy = rect.centerx, rect.centery
-                            r  = CELL_SIZE // 4
+                            r  = self.cell_size // 4
                             pygame.draw.line(self.screen, COLOR_TARGET, (cx-r, cy-r), (cx+r, cy+r), 3)
                             pygame.draw.line(self.screen, COLOR_TARGET, (cx+r, cy-r), (cx-r, cy+r), 3)
 
@@ -136,7 +160,7 @@ class Renderer:
             self.screen.blit(self.img_player, rect)
         else:
             cx, cy = rect.centerx, rect.centery
-            r  = CELL_SIZE // 2 - 6
+            r  = self.cell_size // 2 - 6
             pygame.draw.circle(self.screen, COLOR_PLAYER, (cx, cy), r)
             pygame.draw.circle(self.screen, COLOR_WHITE,  (cx, cy), r, 2)
 

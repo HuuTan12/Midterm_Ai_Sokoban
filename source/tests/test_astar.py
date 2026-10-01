@@ -1,21 +1,25 @@
-import time
+import unittest
+import os
+import sys
+
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, base_dir)
 
 from core.map_parser import MapParser
-from search.ucs import UCS
 from search.astar import AStar
 
+class TestAStar(unittest.TestCase):
+    def setUp(self):
+        self.map_path = os.path.join(base_dir, "maps", "example_map.txt")
+        self.lines = MapParser.load_map(self.map_path)
+        self.board, self.state = MapParser.parse_level(self.lines)
 
-map_lines = MapParser.load_map("maps/example_map.txt")
-board, start_state = MapParser.parse_level(map_lines)
+    def test_astar_search(self):
+        solver = AStar()
+        path, cost, expanded, max_q = solver.search(self.state, self.board)
+        self.assertIsNotNone(path)
+        self.assertTrue(len(path) > 0)
+        self.assertTrue(cost > 0)
 
-print("========== UCS ==========")
-ucs_result = UCS().search(start_state, board)
-
-print("Path:", ucs_result[0])
-print("Cost:", ucs_result[1])
-
-print("\n========== A* ==========")
-astar_result = AStar().search(start_state, board)
-
-print("Path:", astar_result[0])
-print("Cost:", astar_result[1])
+if __name__ == '__main__':
+    unittest.main()

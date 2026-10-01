@@ -45,6 +45,16 @@ class Rules:
                 board.is_wall(box_new_pos) or box_new_pos in state.boxes):
                     continue
                 
+                # Corner deadlock detection
+                if box_new_pos not in board.goals:
+                    wall_up = board.is_wall((box_new_row - 1, box_new_col))
+                    wall_down = board.is_wall((box_new_row + 1, box_new_col))
+                    wall_left = board.is_wall((box_new_row, box_new_col - 1))
+                    wall_right = board.is_wall((box_new_row, box_new_col + 1))
+                    
+                    if (wall_up or wall_down) and (wall_left or wall_right):
+                        continue
+                
                 #tạo ds box mới
                 new_boxes = list(state.boxes)
 

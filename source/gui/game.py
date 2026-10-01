@@ -62,7 +62,7 @@ class Game:
         from source.search.ucs   import UCS
         from source.search.astar import AStar
         from source.search.bfs   import BFS
-       
+        from source.search.gbfs  import GBFS
 
         map_path, algorithm = self.menu.get_selection()
 
@@ -79,10 +79,14 @@ class Game:
             t0 = time.time()
             if algorithm == "ucs":
                 solver = UCS()
+            elif algorithm == "astar":
+                solver = AStar()
             elif algorithm == "bfs":
                 solver = BFS()
-            elif algorithm == "astar":      
-                solver = AStar()
+            elif algorithm == "gbfs":
+                solver = GBFS()
+            else:
+                solver = AStar()   # fallback
             path, cost, expanded, max_q = solver.search(start_state, board, timeout_seconds=30.0)
             elapsed = time.time() - t0
             with self._search_lock:
@@ -93,6 +97,7 @@ class Game:
 
         threading.Thread(target=worker, daemon=True).start()
         self.state = AppState.SOLVING
+
 
     # ─────────────────────────────────────────────
     # 2. Kiểm tra kết quả tìm kiếm

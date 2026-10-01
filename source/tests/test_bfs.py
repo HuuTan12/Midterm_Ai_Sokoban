@@ -1,24 +1,25 @@
+import unittest
 import os
+import sys
+
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, base_dir)
+
 from core.map_parser import MapParser
-from search.bfs import bfs
+from search.bfs import BFS
 
+class TestBFS(unittest.TestCase):
+    def setUp(self):
+        self.map_path = os.path.join(base_dir, "maps", "example_map.txt")
+        self.lines = MapParser.load_map(self.map_path)
+        self.board, self.state = MapParser.parse_level(self.lines)
 
-# Đọc map
-base_dir = os.path.dirname(os.path.abspath(__file__))
-map_path = os.path.join(base_dir, "maps", "example_map.txt")
-lines = MapParser.load_map(map_path)
+    def test_bfs_search(self):
+        solver = BFS()
+        path, cost, expanded, max_q = solver.search(self.state, self.board)
+        self.assertIsNotNone(path)
+        self.assertTrue(len(path) > 0)
+        self.assertTrue(cost > 0)
 
-# Parse thành Board và State
-board, state = MapParser.parse_level(lines)
-
-# Chạy BFS
-solution = bfs(state, board)
-
-# In kết quả
-print("=== BFS RESULT ===")
-
-if solution is None:
-    print("Không tìm thấy lời giải.")
-else:
-    print("Solution:", solution)
-    print("Number of steps:", len(solution))
+if __name__ == '__main__':
+    unittest.main()
