@@ -54,7 +54,7 @@ class AgentTan:
             temp_board = Board(board.width, board.height, temp_walls, board.goals)
             state_obj = State(agent_pos, current_boxes)
             
-            path, _, _, _ = self.algo.search(state_obj, temp_board, timeout_seconds=5.0)
+            path, _, _, _ = self.algo.search(state_obj, temp_board, timeout_seconds=1.0)
             if path and len(path) > 0:
                 self.path = path
             else:

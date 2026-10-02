@@ -1,10 +1,11 @@
 
-from search.astar import AStar
-from search.ucs import UCS
-from core.state import State
-from core.board import Board
-from core.competitive_state import CompetitiveState
-from core.rules import Rules
+from source.search.astar import AStar
+from source.search.ucs import UCS
+from source.core.state import State
+from source.core.board import Board
+from source.core.competitive_state import CompetitiveState
+from source.core.rules import Rules
+
 
 class SmartAgent:
     def __init__(self, algo_class, name, agent_id):
