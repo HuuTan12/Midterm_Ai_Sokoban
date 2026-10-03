@@ -55,7 +55,7 @@ def real_competitive_search(map_path, algorithm, n_steps=50):
 def main(n_steps=50):
     pygame.init()
     screen = pygame.display.set_mode((800, 600))
-    pygame.display.set_caption("Sokoban Competitive - Nhom Hieu")
+    pygame.display.set_caption("Sokoban Competitive - Hieu's Team")
 
     clock = pygame.time.Clock()
 

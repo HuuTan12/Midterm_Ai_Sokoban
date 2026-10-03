@@ -30,7 +30,7 @@ class MainMenuScreen:
     OPTIONS = [
         (
             "SINGLE AGENT",
-            "UCS   /   A*  -  Tim kiem tu dong",
+            "UCS   /   A*  -  Automated Search",
             "player.png",
         ),
         (
@@ -127,7 +127,7 @@ class MainMenuScreen:
         line_y = title_y + title.get_height() + 8
         pygame.draw.line(self.screen, self.C_TITLE, (tx, line_y), (tx + title.get_width(), line_y), 2)
 
-        sub  = self.f_sub.render("Nhom Hieu  -  TDTU AI Midterm  -  Sokoban Puzzle Solver", True, self.C_SUB)
+        sub  = self.f_sub.render("Hieu's Team  -  TDTU AI Midterm  -  Sokoban Puzzle Solver", True, self.C_SUB)
         self.screen.blit(sub, ((sw - sub.get_width()) // 2, line_y + 10))
 
         # ── Buttons ──

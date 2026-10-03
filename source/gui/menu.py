@@ -35,22 +35,22 @@ _ALGO_META  = {
     "ucs":   {
         "label": "UCS",
         "full":  "Uniform Cost Search",
-        "note":  "Duyet theo chi phi tang dan",
+        "note":  "Search by increasing cost",
     },
     "astar": {
         "label": "A*",
         "full":  "A* (Chebyshev Heuristic)",
-        "note":  "Tim kiem co huong dan boi heuristic",
+        "note":  "Heuristic-guided search",
     },
     "bfs": {
         "label": "BFS",
         "full":  "Breadth-First Search",
-        "note":  "Tim duong ngan nhat theo so buoc",
+        "note":  "Shortest path by number of steps",
     },
     "gbfs": {
         "label": "GBFS",
         "full":  "Greedy Best-First Search",
-        "note":  "Tham lam theo heuristic, nhanh nhung khong toi uu",
+        "note":  "Greedy heuristic search, fast but suboptimal",
     },
 }
 
@@ -155,8 +155,8 @@ class MenuScreen:
 
         # ── Tiêu đề ──
         TITLE_Y = 28
-        sh_surf = self.f_title.render("CHON MAP  &  THUAT TOAN", True, _GOLD_DIM)
-        ti_surf = self.f_title.render("CHON MAP  &  THUAT TOAN", True, _GOLD)
+        sh_surf = self.f_title.render("CHOOSE MAP & ALGORITHM", True, _GOLD_DIM)
+        ti_surf = self.f_title.render("CHOOSE MAP & ALGORITHM", True, _GOLD)
         tx = (sw - ti_surf.get_width()) // 2
         self.screen.blit(sh_surf, (tx + 3, TITLE_Y + 3))
         self.screen.blit(ti_surf, (tx, TITLE_Y))
@@ -165,7 +165,7 @@ class MenuScreen:
         pygame.draw.line(self.screen, _GOLD, (tx, line_y), (tx + ti_surf.get_width(), line_y), 2)
 
         sub = self.f_sub.render(
-            "Len/Xuong: chon Map   |   Trai/Phai: chon Thuat toan   |   Enter / Click: Xac nhan",
+            "Up/Down: select Map   |   Left/Right: select Algorithm   |   Enter / Click: Confirm",
             True, _SUBTITLE
         )
         self.screen.blit(sub, ((sw - sub.get_width()) // 2, line_y + 6))
@@ -184,7 +184,7 @@ class MenuScreen:
         pygame.draw.rect(self.screen, _PANEL_BG, map_panel, border_radius=16)
         pygame.draw.rect(self.screen, _PANEL_BDR, map_panel, 1, border_radius=16)
 
-        sec_map = self.f_sec.render("📂  BAN DO (MAP)", True, _SUBTITLE)
+        sec_map = self.f_sec.render("📂  MAP", True, _SUBTITLE)
         self.screen.blit(sec_map, (LEFT_X + 16, CONTENT_Y + 12))
 
         DIVIDER_Y = CONTENT_Y + 12 + sec_map.get_height() + 8
@@ -233,7 +233,7 @@ class MenuScreen:
         pygame.draw.rect(self.screen, _PANEL_BG, algo_panel, border_radius=16)
         pygame.draw.rect(self.screen, _PANEL_BDR, algo_panel, 1, border_radius=16)
 
-        sec_algo = self.f_sec.render("⚙  THUAT TOAN", True, _SUBTITLE)
+        sec_algo = self.f_sec.render("⚙  ALGORITHM", True, _SUBTITLE)
         self.screen.blit(sec_algo, (RIGHT_X + 16, CONTENT_Y + 12))
 
         ALGO_DIV_Y = CONTENT_Y + 12 + sec_algo.get_height() + 8
@@ -286,7 +286,7 @@ class MenuScreen:
             pygame.draw.rect(self.screen, _PANEL_BG, info_panel, border_radius=16)
             pygame.draw.rect(self.screen, _PANEL_BDR, info_panel, 1, border_radius=16)
 
-            sec_info = self.f_sec.render("📋  THONG TIN CHON", True, _SUBTITLE)
+            sec_info = self.f_sec.render("📋  SELECTION INFO", True, _SUBTITLE)
             self.screen.blit(sec_info, (RIGHT_X + 16, INFO_Y + 12))
 
             map_name = os.path.basename(self.map_paths[self.selected_map_index]) \
@@ -319,14 +319,14 @@ class MenuScreen:
 
         pygame.draw.rect(self.screen, _ENTER_BG,  self._enter_rect, border_radius=14)
         pygame.draw.rect(self.screen, _ENTER_BDR, self._enter_rect, 2, border_radius=14)
-        ent_txt = self.f_enter.render("►  BAT DAU  ( Enter )", True, _ENTER_TXT)
+        ent_txt = self.f_enter.render("►  START  ( Enter )", True, _ENTER_TXT)
         ex = ENT_X + (ENT_W - ent_txt.get_width())  // 2
         ey = ENT_Y + (ENT_H - ent_txt.get_height()) // 2
         self.screen.blit(ent_txt, (ex, ey))
 
         # ── Hint dưới cùng ──
         hint = self.f_hint.render(
-            "↑ ↓  Map   |   ← →  Algo   |   Enter / Click  Xac nhan   |   Esc  Quay lai",
+            "↑ ↓  Map   |   ← →  Algo   |   Enter / Click  Confirm   |   Esc  Back",
             True, _HINT
         )
         self.screen.blit(hint, ((sw - hint.get_width()) // 2, sh - 22))

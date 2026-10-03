@@ -37,7 +37,7 @@ from source.gui.controls   import Command, map_event_to_command
 SCREEN_W  = 900
 SCREEN_H  = 650
 FPS       = 60
-TITLE     = "Sokoban AI  -  Nhom Hieu  -  TDTU"
+TITLE     = "Sokoban AI  -  Hieu's Team  -  TDTU"
 
 
 # ── Hàm tiện ích ──────────────────────────────────────────────────────
