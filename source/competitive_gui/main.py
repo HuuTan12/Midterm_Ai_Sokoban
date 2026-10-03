@@ -2,7 +2,6 @@ import pygame
 import sys
 import os
 
-# Thêm cả thư mục gốc VÀ thư mục source để import core, search đúng
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 SRC_DIR  = os.path.join(ROOT_DIR, 'source')
 sys.path.insert(0, ROOT_DIR)
@@ -13,7 +12,6 @@ from source.competitive_gui.game import CompetitiveGameScreen
 
 
 def is_competitive_map(map_path):
-    """Kiểm tra map có đủ 2 agents không (phải có cả 'A' và 'E')."""
     try:
         with open(map_path, 'r', encoding='utf-8') as f:
             content = f.read()
@@ -59,7 +57,6 @@ def main(n_steps=50):
 
     clock = pygame.time.Clock()
 
-    # === FIX: Chỉ load map HỢP LỆ cho competitive (có đủ 2 agents 'A' và 'E') ===
     map_paths = []
     maps_dir = os.path.join(ROOT_DIR, "source", "maps")
     if os.path.exists(maps_dir):
@@ -70,13 +67,13 @@ def main(n_steps=50):
                     map_paths.append(full_path)
 
     if not map_paths:
-        print("[LOI] Khong tim thay map nao co 2 agents trong source/maps/")
-        print("      Map competitive can co ky tu 'A' (agent 1) va 'E' (agent 2).")
+        print("[ERROR] No competitive maps found in source/maps/")
+        print("        Competitive maps need 'A' (agent 1) and 'E' (agent 2).")
         pygame.quit()
         return
 
     current_state = "MENU"
-    menu_screen = MenuScreen(screen, map_paths)
+    menu_screen = MenuScreen(screen, map_paths, is_competitive=True)
     game_screen = None
 
     running = True
@@ -87,10 +84,9 @@ def main(n_steps=50):
 
             if current_state == "MENU":
                 if menu_screen.handle_event(event):
-                    selected_map, selected_algo = menu_screen.get_selection()
+                    selected_map, selected_algo, step_limit = menu_screen.get_selection()
 
-                    # Thuật toán chạy ngầm trong background với giới hạn n_steps
-                    actions1, actions2 = real_competitive_search(selected_map, selected_algo, n_steps)
+                    actions1, actions2 = real_competitive_search(selected_map, selected_algo, step_limit)
 
                     game_screen = CompetitiveGameScreen(screen, selected_map, actions1, actions2)
                     current_state = "GAME"

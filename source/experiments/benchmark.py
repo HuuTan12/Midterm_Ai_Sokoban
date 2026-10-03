@@ -2,13 +2,11 @@ import time
 import os
 import sys
 
-# Thêm đường dẫn gốc để import core, search
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from core.map_parser import MapParser
 from search.ucs import UCS
 from search.astar import AStar
-
 
 def run_benchmark(map_path):
     print(f"Benchmarking on: {os.path.basename(map_path)}")
@@ -70,11 +68,9 @@ def run_benchmark(map_path):
     print("UCS Path:", ucs_result[0])
     print("A* Path:", astar_result[0])
 
-
 if __name__ == "__main__":
     map_file = os.path.join(os.path.dirname(__file__), "..", "maps", "example_map.txt")
-
     if os.path.exists(map_file):
         run_benchmark(map_file)
     else:
-        print(f"Loi: Khong tim thay file {map_file}.")
+        print(f"Error: Could not find file {map_file}.")

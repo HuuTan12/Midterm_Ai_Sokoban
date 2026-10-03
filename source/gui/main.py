@@ -11,7 +11,6 @@ from source.gui.game import Game
 
 
 def main():
-    """Entry point cho chế độ 1 Agent (Requirement 5)."""
     maps_dir = os.path.join(ROOT_DIR, "source", "maps")
     map_paths = []
     if os.path.exists(maps_dir):
@@ -20,7 +19,7 @@ def main():
                 map_paths.append(os.path.join(maps_dir, fname))
 
     if not map_paths:
-        print("[CANH BAO] Khong tim thay map nao trong source/maps/")
+        print("[WARNING] No maps found in source/maps/")
         return
 
     Game(map_paths).run()

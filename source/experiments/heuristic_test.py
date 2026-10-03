@@ -2,18 +2,15 @@ from collections import deque
 import sys
 import os
 
-# Thêm đường dẫn gốc để import core, search
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from core.map_parser import MapParser
 from core.rules import Rules
 from search.astar import AStar
 
-
 map_file = os.path.join(os.path.dirname(__file__), "..", "maps", "example_map.txt")
 map_lines = MapParser.load_map(map_file)
 board, start_state = MapParser.parse_level(map_lines)
-
 
 def get_all_states(start_state, board):
     visited = set()
@@ -32,7 +29,6 @@ def get_all_states(start_state, board):
                 queue.append(new_state)
 
     return visited
-
 
 def calculate_cost_to_goal(states, board):
     costs = {}
@@ -59,7 +55,6 @@ def calculate_cost_to_goal(states, board):
 
     return costs
 
-
 states = get_all_states(start_state, board)
 real_costs = calculate_cost_to_goal(states, board)
 
@@ -80,7 +75,7 @@ for state in states:
     real_cost = real_costs[state]
 
     if h > real_cost:
-        print("Vi phạm tại state:", state.agent_pos, state.boxes)
+        print("Violation at state:", state.agent_pos, state.boxes)
         print("h(n):", h)
         print("cost to goal:", real_cost)
 
@@ -91,7 +86,6 @@ if admissible:
     print("Heuristic is admissible.")
 else:
     print("Heuristic is NOT admissible.")
-
 
 print("\n========== CONSISTENCY ==========")
 
@@ -106,7 +100,7 @@ for state in states:
         cost = 1
 
         if h_current > cost + h_next:
-            print("Vi phạm tại:")
+            print("Violation at:")
             print("State:", state.agent_pos, state.boxes)
             print("Action:", action)
             print("Next state:", new_state.agent_pos, new_state.boxes)

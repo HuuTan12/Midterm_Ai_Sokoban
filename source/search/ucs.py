@@ -4,59 +4,51 @@ from search.search_algorithm import SearchAlgorithm
 
 def reconstruct_path(goal_state, parent):
     path = []
-    current_state = goal_state
-
-    while current_state in parent:
-        previous_state, action = parent[current_state]
+    current = goal_state
+    while current in parent:
+        prev, action = parent[current]
         path.append(action)
-        current_state = previous_state
-        
+        current = prev
     path.reverse()
     return path
 
 class UCS(SearchAlgorithm):
-    def search(self, start_state, board, timeout_seconds=1.0):
+    def search(self, start_state, board, timeout_seconds=30.0):
         import time
         start_time = time.time()
-        priority_queue = []
-        tie_breaker = 0
-        expanded_nodes = 0
-        max_queue_size = 1 
+        pq = []
+        tie = 0
+        expanded = 0
+        max_q = 1
 
-        heapq.heappush(priority_queue, (0, tie_breaker, start_state))
-
+        heapq.heappush(pq, (0, tie, start_state))
         visited = set()
         parent = {}
-        cost_so_far = {start_state: 0}
+        cost = {start_state: 0}
 
-        while priority_queue:
+        while pq:
             if time.time() - start_time > timeout_seconds:
-                return None, 0, expanded_nodes, max_queue_size
+                return None, 0, expanded, max_q
 
-            current_fee, _, current_state = heapq.heappop(priority_queue)
+            g, _, state = heapq.heappop(pq)
 
-            if current_state in visited:
+            if state in visited:
                 continue
-            
-            visited.add(current_state)
-            expanded_nodes += 1
+            visited.add(state)
+            expanded += 1
 
-            if current_state.is_goal(board):
-                path = reconstruct_path(current_state, parent)
-                return path, current_fee, expanded_nodes, max_queue_size
+            if state.is_goal(board):
+                path = reconstruct_path(state, parent)
+                return path, g, expanded, max_q
 
-            successors = Rules.get_successors(current_state, board)
+            for action, next_state in Rules.get_successors(state, board):
+                new_g = g + 1
+                if next_state not in visited and (next_state not in cost or new_g < cost[next_state]):
+                    cost[next_state] = new_g
+                    parent[next_state] = (state, action)
+                    tie += 1
+                    heapq.heappush(pq, (new_g, tie, next_state))
 
-            for action, new_state in successors:
-                new_cost = current_fee + 1
+            max_q = max(max_q, len(pq))
 
-                if new_state not in visited and (new_state not in cost_so_far or new_cost < cost_so_far[new_state]):
-                    cost_so_far[new_state] = new_cost
-                    parent[new_state] = (current_state, action)
-                    
-                    tie_breaker += 1
-                    heapq.heappush(priority_queue, (new_cost, tie_breaker, new_state))
-            
-            max_queue_size = max(max_queue_size, len(priority_queue))
-                    
-        return None, 0, expanded_nodes, max_queue_size
+        return None, 0, expanded, max_q

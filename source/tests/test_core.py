@@ -1,17 +1,17 @@
 import os
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from core.map_parser import MapParser
 from core.rules import Rules
 
-
-# 1. Đọc file map
 base_dir = os.path.dirname(os.path.abspath(__file__))
-map_path = os.path.join(base_dir, "maps", "example_map.txt")
+map_path = os.path.join(base_dir, "..", "maps", "example_map.txt")
 lines = MapParser.load_map(map_path)
 
-# 2. Parse map thành Board và State
 board, state = MapParser.parse_level(lines)
 
-# 3. In thông tin để kiểm tra
 print("=== BOARD ===")
 print("Width:", board.width)
 print("Height:", board.height)
@@ -22,7 +22,6 @@ print("\n=== STATE ===")
 print("Agent:", state.agent_pos)
 print("Boxes:", state.boxes)
 
-# 4. Sinh các trạng thái kế tiếp
 successors = Rules.get_successors(state, board)
 
 print("\n=== SUCCESSORS ===")
