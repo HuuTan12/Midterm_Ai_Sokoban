@@ -188,7 +188,7 @@ class SokobanApp:
 
         elif self._state == self.S_COMP_SOLVE:
             if self._comp_result is not None:
-                from source.competitive_gui.game import CompetitiveGameScreen
+                from source.competitive.game import CompetitiveGameScreen
                 actions1, actions2, map_path = self._comp_result
                 self._comp_game = CompetitiveGameScreen(self.screen, map_path, actions1, actions2)
                 self._state = self.S_COMP_GAME
