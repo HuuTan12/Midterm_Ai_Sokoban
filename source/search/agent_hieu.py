@@ -42,15 +42,15 @@ class AgentHieu:
             temp_board = Board(board.width, board.height, temp_walls, board.goals)
             state_obj = State(agent_pos, current_boxes)
             path, _, _, _ = self.algo.search(state_obj, temp_board, timeout_seconds=1.0)
-            if path:
+            
+            if path is not None:
                 self.path = path
             else:
-                import random
-                successors = Rules.get_successors(state_obj, temp_board)
-                valid_acts = [act for act, succ in successors if succ.agent_pos != other_pos]
-                if valid_acts:
-                    return random.choice(valid_acts)
                 return None
+
+        if len(self.path) == 0:
+            return None
+
 
         if self.path:
             action = self.path.pop(0)

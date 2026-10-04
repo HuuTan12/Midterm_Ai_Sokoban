@@ -121,9 +121,6 @@ class SokobanApp:
                 state = CompetitiveRules.apply_actions(state, a1, a2, board)
                 
                 if a1 is None and a2 is None:
-                    rem = step_limit - len(actions1)
-                    actions1.extend([None] * rem)
-                    actions2.extend([None] * rem)
                     break
 
             self._comp_result = (actions1, actions2, map_path)

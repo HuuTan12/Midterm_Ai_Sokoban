@@ -50,21 +50,35 @@ class CompetitiveRules:
         np1, box_push1 = check_move(p1, np1, d1, p2)
         np2, box_push2 = check_move(p2, np2, d2, p1)
 
-        if np1 == np2 and np1 != p1:
-            np2, box_push2 = p2, None
-
-        if np1 == p2 and np2 == p1:
+        if np1 == p2 and np2 == p1 and np1 != p1:
             np1, box_push1 = p1, None
             np2, box_push2 = p2, None
 
-        if box_push1 and box_push1[1] == np2:
-            np2, box_push2 = p2, None
-            
-        if box_push2 and box_push2[1] == np1:
-            np1, box_push1 = p1, None
+        if np1 == np2 and np1 is not None:
+            if np1 != p1 and np2 != p2:
+                np1, box_push1 = p1, None
+                np2, box_push2 = p2, None
+            elif np1 == p1:
+                np2, box_push2 = p2, None
+            elif np2 == p2:
+                np1, box_push1 = p1, None
 
         if box_push1 and box_push2 and box_push1[1] == box_push2[1]:
+            np1, box_push1 = p1, None
             np2, box_push2 = p2, None
+
+        push1_conflict = box_push1 and box_push1[1] == np2
+        push2_conflict = box_push2 and box_push2[1] == np1
+
+        if push1_conflict:
+            np1, box_push1 = p1, None
+            if np2 != p2:
+                np2, box_push2 = p2, None
+                
+        if push2_conflict:
+            np2, box_push2 = p2, None
+            if np1 != p1:
+                np1, box_push1 = p1, None
 
         neutral_boxes = list(state.neutral_boxes)
         agent1_boxes  = list(state.agent1_boxes)

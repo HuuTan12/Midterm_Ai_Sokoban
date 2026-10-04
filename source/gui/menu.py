@@ -359,5 +359,6 @@ class MenuScreen:
         algo     = self.algorithms[self.selected_algo]
         if self.is_competitive:
             n_steps = int(self.step_limit_str) if self.step_limit_str else 50
+            n_steps = max(1, n_steps)
             return map_path, algo, n_steps
         return map_path, algo
