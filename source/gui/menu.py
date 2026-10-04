@@ -1,332 +1,338 @@
 import pygame
 import os
 
+BG_TOP      = (15,  20,  45)
+BG_BOT      = (30,  15,  60)
+GOLD        = (255, 215,   0)
+GOLD_DIM    = ( 80,  55,   0)
+SUBTITLE    = (160, 155, 210)
+HINT_COLOR  = ( 90,  90, 140)
+PANEL_BG    = ( 25,  25,  55)
+PANEL_BDR   = ( 65,  65, 130)
+ROW_NORMAL  = ( 35,  35,  72)
+ROW_SELECT  = ( 65,  40, 135)
+ROW_BDR_N   = ( 60,  60, 120)
+ROW_BDR_S   = (190, 145, 255)
+ROW_TXT_N   = (175, 175, 215)
+ROW_TXT_S   = (255, 255, 255)
+ALGO_NORMAL = ( 40,  40,  85)
+ALGO_SELECT = ( 90,  55, 170)
+ALGO_BDR_N  = ( 70,  70, 140)
+ALGO_BDR_S  = (220, 170, 255)
+ALGO_TXT_N  = (160, 155, 210)
+BTN_BG      = ( 50, 130,  70)
+BTN_BDR     = (100, 220, 130)
+BTN_TXT     = (220, 255, 230)
+AGENT1_COL  = (100, 150, 255)
+AGENT2_COL  = (100, 220, 130)
+VS_COLOR    = (255, 180,  50)
 
-_BG_TOP    = (15,  20,  45)
-_BG_BOT    = (30,  15,  60)
-_GOLD      = (255, 215,   0)
-_GOLD_DIM  = ( 80,  55,   0)
-_SUBTITLE  = (160, 155, 210)
-_HINT      = ( 90,  90, 140)
-_PANEL_BG  = ( 25,  25,  55)
-_PANEL_BDR = ( 65,  65, 130)
-_ROW_NOR   = ( 35,  35,  72)
-_ROW_SEL   = ( 65,  40, 135)
-_ROW_BDR_N = ( 60,  60, 120)
-_ROW_BDR_S = (190, 145, 255)
-_ROW_TXT_N = (175, 175, 215)
-_ROW_TXT_S = (255, 255, 255)
-_ALGO_NOR  = ( 40,  40,  85)
-_ALGO_SEL  = ( 90,  55, 170)
-_ALGO_BDR_N= ( 70,  70, 140)
-_ALGO_BDR_S= (220, 170, 255)
-_ALGO_TXT_N= (160, 155, 210)
-_ALGO_TXT_S= (255, 255, 255)
-_ENTER_BG  = ( 50, 130,  70)
-_ENTER_BDR = (100, 220, 130)
-_ENTER_TXT = (220, 255, 230)
-
-_ALGO_META = {
-    "ucs": {
-        "label": "UCS",
-        "full":  "Uniform Cost Search",
-        "note":  "Search by increasing cost",
-    },
-    "astar": {
-        "label": "A*",
-        "full":  "A* (Chebyshev Heuristic)",
-        "note":  "Heuristic-guided optimal search",
-    },
-    "bfs": {
-        "label": "BFS",
-        "full":  "Breadth-First Search",
-        "note":  "Shortest path by number of steps",
-    },
-    "gbfs": {
-        "label": "GBFS",
-        "full":  "Greedy Best-First Search",
-        "note":  "Fast but not guaranteed optimal",
-    },
+ALGO_LIST = ["ucs", "astar"]
+ALGO_INFO = {
+    "ucs":   ("UCS",  "Uniform Cost Search",      "Search by increasing cost"),
+    "astar": ("A*",   "A* (Hungarian-Chebyshev)",  "Optimal assignment + Deadlock handling"),
 }
 
 
 class MenuScreen:
-    def __init__(self, screen: pygame.Surface, map_paths: list, is_competitive: bool = False):
-        self.screen              = screen
-        self.map_paths           = map_paths
-        self.is_competitive      = is_competitive
-        self.selected_map_index  = 0
-        self.algorithms          = ["ucs", "astar"]
-        self.selected_algo_index = 0
-        self.is_confirmed        = False
-        self.step_limit_str      = ""
+    def __init__(self, screen, map_paths, is_competitive=False):
+        self.screen         = screen
+        self.map_paths      = map_paths
+        self.is_competitive = is_competitive
+        self.selected_map   = 0
+        self.selected_algo  = 0
+        self.algorithms     = ALGO_LIST
+        self.is_confirmed   = False
+        self.step_limit_str = ""
 
-        self.f_title = pygame.font.SysFont("arial", 44, bold=True)
-        self.f_sub   = pygame.font.SysFont("arial", 17)
-        self.f_sec   = pygame.font.SysFont("arial", 15, bold=True)
-        self.f_row   = pygame.font.SysFont("arial", 19, bold=True)
-        self.f_algo  = pygame.font.SysFont("arial", 22, bold=True)
-        self.f_note  = pygame.font.SysFont("arial", 14)
-        self.f_enter = pygame.font.SysFont("arial", 20, bold=True)
-        self.f_hint  = pygame.font.SysFont("arial", 14)
+        self.font_title = pygame.font.SysFont("arial", 40, bold=True)
+        self.font_sub   = pygame.font.SysFont("arial", 16)
+        self.font_sec   = pygame.font.SysFont("arial", 14, bold=True)
+        self.font_row   = pygame.font.SysFont("arial", 18, bold=True)
+        self.font_algo  = pygame.font.SysFont("arial", 20, bold=True)
+        self.font_small = pygame.font.SysFont("arial", 13)
+        self.font_btn   = pygame.font.SysFont("arial", 19, bold=True)
+        self.font_hint  = pygame.font.SysFont("arial", 13)
 
         sw, sh = screen.get_size()
-        self._bg = pygame.Surface((sw, sh))
+        self.bg = pygame.Surface((sw, sh))
         for y in range(sh):
             t = y / sh
-            r = int(_BG_TOP[0] * (1-t) + _BG_BOT[0] * t)
-            g = int(_BG_TOP[1] * (1-t) + _BG_BOT[1] * t)
-            b = int(_BG_TOP[2] * (1-t) + _BG_BOT[2] * t)
-            pygame.draw.line(self._bg, (r, g, b), (0, y), (sw, y))
+            r = int(BG_TOP[0] * (1 - t) + BG_BOT[0] * t)
+            g = int(BG_TOP[1] * (1 - t) + BG_BOT[1] * t)
+            b = int(BG_TOP[2] * (1 - t) + BG_BOT[2] * t)
+            pygame.draw.line(self.bg, (r, g, b), (0, y), (sw, y))
 
-        dot_s = pygame.Surface((sw, sh), pygame.SRCALPHA)
-        for gx in range(0, sw, 36):
-            for gy in range(0, sh, 36):
-                pygame.draw.circle(dot_s, (255, 255, 255, 15), (gx, gy), 1)
-        self._bg.blit(dot_s, (0, 0))
+        self.map_rects  = []
+        self.algo_rects = []
+        self.start_rect = None
 
-        self._map_rects : list = []
-        self._algo_rects: list = []
-        self._enter_rect       = None
-
-    def handle_event(self, event: pygame.event.Event) -> bool:
+    def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP:
-                self.selected_map_index = (self.selected_map_index - 1) % max(len(self.map_paths), 1)
+                self.selected_map = (self.selected_map - 1) % max(len(self.map_paths), 1)
             elif event.key == pygame.K_DOWN:
-                self.selected_map_index = (self.selected_map_index + 1) % max(len(self.map_paths), 1)
-            elif event.key == pygame.K_LEFT:
-                self.selected_algo_index = (self.selected_algo_index - 1) % len(self.algorithms)
-            elif event.key == pygame.K_RIGHT:
-                self.selected_algo_index = (self.selected_algo_index + 1) % len(self.algorithms)
+                self.selected_map = (self.selected_map + 1) % max(len(self.map_paths), 1)
+            elif event.key == pygame.K_LEFT and not self.is_competitive:
+                self.selected_algo = (self.selected_algo - 1) % len(self.algorithms)
+            elif event.key == pygame.K_RIGHT and not self.is_competitive:
+                self.selected_algo = (self.selected_algo + 1) % len(self.algorithms)
             elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
                 self.is_confirmed = True
                 return True
             elif self.is_competitive:
                 if event.key == pygame.K_BACKSPACE:
                     self.step_limit_str = self.step_limit_str[:-1]
-                elif event.unicode.isdigit():
+                elif event.unicode.isdigit() and len(self.step_limit_str) < 3:
                     self.step_limit_str += event.unicode
-                    if len(self.step_limit_str) > 3:
-                        self.step_limit_str = self.step_limit_str[:3]
 
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            pos = event.pos
-            for i, rect in enumerate(self._map_rects):
-                if rect.collidepoint(pos):
-                    self.selected_map_index = i
-                    break
-            for i, rect in enumerate(self._algo_rects):
-                if rect.collidepoint(pos):
-                    self.selected_algo_index = i
-                    break
-            if self._enter_rect and self._enter_rect.collidepoint(pos):
+            for i, rect in enumerate(self.map_rects):
+                if rect.collidepoint(event.pos):
+                    self.selected_map = i
+            for i, rect in enumerate(self.algo_rects):
+                if rect.collidepoint(event.pos):
+                    self.selected_algo = i
+            if self.start_rect and self.start_rect.collidepoint(event.pos):
                 self.is_confirmed = True
                 return True
 
         elif event.type == pygame.MOUSEMOTION:
-            pos = event.pos
-            for i, rect in enumerate(self._map_rects):
-                if rect.collidepoint(pos):
-                    self.selected_map_index = i
-                    break
+            for i, rect in enumerate(self.map_rects):
+                if rect.collidepoint(event.pos):
+                    self.selected_map = i
 
         return False
 
     def draw(self):
         sw, sh = self.screen.get_size()
-        self.screen.blit(self._bg, (0, 0))
+        self.screen.blit(self.bg, (0, 0))
 
-        TITLE_Y = 28
-        sh_surf = self.f_title.render("CHOOSE MAP & ALGORITHM", True, _GOLD_DIM)
-        ti_surf = self.f_title.render("CHOOSE MAP & ALGORITHM", True, _GOLD)
-        tx = (sw - ti_surf.get_width()) // 2
-        self.screen.blit(sh_surf, (tx + 3, TITLE_Y + 3))
-        self.screen.blit(ti_surf, (tx, TITLE_Y))
+        title = "CHOOSE MAP  -  COMPETITIVE" if self.is_competitive else "CHOOSE MAP & ALGORITHM"
+        shadow = self.font_title.render(title, True, GOLD_DIM)
+        text   = self.font_title.render(title, True, GOLD)
+        tx = (sw - text.get_width()) // 2
+        ty = 24
+        self.screen.blit(shadow, (tx + 3, ty + 3))
+        self.screen.blit(text,   (tx,     ty))
 
-        line_y = TITLE_Y + ti_surf.get_height() + 4
-        pygame.draw.line(self.screen, _GOLD, (tx, line_y), (tx + ti_surf.get_width(), line_y), 2)
+        line_y = ty + text.get_height() + 4
+        pygame.draw.line(self.screen, GOLD, (tx, line_y), (tx + text.get_width(), line_y), 2)
 
-        sub = self.f_sub.render(
-            "Up/Down: select Map   |   Left/Right: select Algorithm   |   Enter / Click: Confirm",
-            True, _SUBTITLE
-        )
-        self.screen.blit(sub, ((sw - sub.get_width()) // 2, line_y + 6))
-
-        COL_GAP   = 28
-        LEFT_W    = int(sw * 0.52)
-        RIGHT_W   = sw - LEFT_W - COL_GAP * 2
-        LEFT_X    = COL_GAP
-        RIGHT_X   = LEFT_W + COL_GAP * 2
-        CONTENT_Y = TITLE_Y + ti_surf.get_height() + 40
-
-        MAP_PANEL_H = sh - CONTENT_Y - 80
-        map_panel   = pygame.Rect(LEFT_X, CONTENT_Y, LEFT_W, MAP_PANEL_H)
-        pygame.draw.rect(self.screen, _PANEL_BG,  map_panel, border_radius=16)
-        pygame.draw.rect(self.screen, _PANEL_BDR, map_panel, 1, border_radius=16)
-
-        sec_map = self.f_sec.render("MAP", True, _SUBTITLE)
-        self.screen.blit(sec_map, (LEFT_X + 16, CONTENT_Y + 12))
-
-        DIVIDER_Y = CONTENT_Y + 12 + sec_map.get_height() + 8
-        pygame.draw.line(self.screen, _PANEL_BDR,
-                         (LEFT_X + 12, DIVIDER_Y), (LEFT_X + LEFT_W - 12, DIVIDER_Y))
-
-        ROW_H   = 38
-        ROW_PAD = 8
-        ROW_X   = LEFT_X + 10
-        ROW_W   = LEFT_W - 20
-        self._map_rects = []
-
-        for i, mp in enumerate(self.map_paths):
-            ry    = DIVIDER_Y + 8 + i * (ROW_H + ROW_PAD)
-            rrect = pygame.Rect(ROW_X, ry, ROW_W, ROW_H)
-            self._map_rects.append(rrect)
-
-            is_sel = (i == self.selected_map_index)
-            bg     = _ROW_SEL   if is_sel else _ROW_NOR
-            bdr    = _ROW_BDR_S if is_sel else _ROW_BDR_N
-            pygame.draw.rect(self.screen, bg,  rrect, border_radius=10)
-            pygame.draw.rect(self.screen, bdr, rrect, 1, border_radius=10)
-
-            name  = os.path.basename(mp)
-            txt_c = _ROW_TXT_S if is_sel else _ROW_TXT_N
-            txt   = self.f_row.render(name, True, txt_c)
-            ty    = ry + (ROW_H - txt.get_height()) // 2
-            self.screen.blit(txt, (ROW_X + 14, ty))
-
-            if is_sel:
-                arrow = self.f_row.render(">", True, _GOLD)
-                self.screen.blit(arrow, (ROW_X + ROW_W - 22, ty))
-
-        ABTN_H      = 52
-        ABTN_GAP    = 6
-        ABTN_W      = RIGHT_W - 20
-        ABTN_X      = RIGHT_X + 10
-        n_algos     = len(self.algorithms)
-        ALGO_HDR_H  = 40
-        ALGO_PANEL_H= ALGO_HDR_H + 12 + n_algos * (ABTN_H + ABTN_GAP) + 4
-
-        algo_panel = pygame.Rect(RIGHT_X, CONTENT_Y, RIGHT_W, ALGO_PANEL_H)
-        pygame.draw.rect(self.screen, _PANEL_BG,  algo_panel, border_radius=16)
-        pygame.draw.rect(self.screen, _PANEL_BDR, algo_panel, 1, border_radius=16)
-
-        sec_algo = self.f_sec.render("ALGORITHM", True, _SUBTITLE)
-        self.screen.blit(sec_algo, (RIGHT_X + 16, CONTENT_Y + 12))
-
-        ALGO_DIV_Y = CONTENT_Y + 12 + sec_algo.get_height() + 8
-        pygame.draw.line(self.screen, _PANEL_BDR,
-                         (RIGHT_X + 12, ALGO_DIV_Y), (RIGHT_X + RIGHT_W - 12, ALGO_DIV_Y))
-
-        ABTN_Y_START = ALGO_DIV_Y + 12
-        self._algo_rects = []
-
-        for i, algo_key in enumerate(self.algorithms):
-            meta  = _ALGO_META.get(algo_key, {"label": algo_key.upper(), "full": "", "note": ""})
-            ay    = ABTN_Y_START + i * (ABTN_H + ABTN_GAP)
-            arect = pygame.Rect(ABTN_X, ay, ABTN_W, ABTN_H)
-            self._algo_rects.append(arect)
-
-            is_sel = (i == self.selected_algo_index)
-            bg     = _ALGO_SEL   if is_sel else _ALGO_NOR
-            bdr    = _ALGO_BDR_S if is_sel else _ALGO_BDR_N
-            pygame.draw.rect(self.screen, bg,  arect, border_radius=12)
-            pygame.draw.rect(self.screen, bdr, arect, 2 if is_sel else 1, border_radius=12)
-
-            if is_sel:
-                gl = arect.inflate(10, 10)
-                gs = pygame.Surface(gl.size, pygame.SRCALPHA)
-                pygame.draw.rect(gs, (*_ALGO_BDR_S, 50), gs.get_rect(), border_radius=16)
-                self.screen.blit(gs, gl.topleft)
-
-            txt_c  = _ALGO_TXT_S if is_sel else _ALGO_TXT_N
-            note_c = (190, 185, 230) if is_sel else (100, 95, 150)
-            lbl    = self.f_algo.render(meta["label"], True, _GOLD if is_sel else txt_c)
-            full   = self.f_note.render(meta["full"],  True, txt_c)
-            note   = self.f_note.render(meta["note"],  True, note_c)
-            self.screen.blit(lbl,  (ABTN_X + 14, ay + 5))
-            self.screen.blit(full, (ABTN_X + 14, ay + 24))
-            self.screen.blit(note, (ABTN_X + 14, ay + 38))
-
-            if is_sel:
-                ck = self.f_algo.render("v", True, _GOLD)
-                self.screen.blit(ck, (ABTN_X + ABTN_W - ck.get_width() - 12,
-                                       ay + (ABTN_H - ck.get_height()) // 2))
-
-        INFO_Y = CONTENT_Y + ALGO_PANEL_H + 16
-        INFO_H = sh - INFO_Y - 70
-        if INFO_H > 50:
-            info_panel = pygame.Rect(RIGHT_X, INFO_Y, RIGHT_W, INFO_H)
-            pygame.draw.rect(self.screen, _PANEL_BG,  info_panel, border_radius=16)
-            pygame.draw.rect(self.screen, _PANEL_BDR, info_panel, 1, border_radius=16)
-
-            sec_info = self.f_sec.render("SELECTION INFO", True, _SUBTITLE)
-            self.screen.blit(sec_info, (RIGHT_X + 16, INFO_Y + 12))
-
-            map_name = os.path.basename(self.map_paths[self.selected_map_index]) if self.map_paths else "-"
-            algo_key = self.algorithms[self.selected_algo_index]
-            meta     = _ALGO_META.get(algo_key, {"label": algo_key.upper()})
-
-            lines = [
-                ("Map   :", map_name,       (220, 215, 255)),
-                ("Algo  :", meta["label"],   _GOLD),
-            ]
-            
-            if self.is_competitive:
-                disp_val = self.step_limit_str if self.step_limit_str else "50 (default)"
-                lines.append(("Steps :", disp_val, (100, 255, 100)))
-
-            for row_i, (lbl, val, vc) in enumerate(lines):
-                ly     = INFO_Y + 34 + row_i * 24
-                l_surf = self.f_note.render(lbl, True, _HINT)
-                self.screen.blit(l_surf, (RIGHT_X + 16, ly))
-                
-                if lbl == "Steps :":
-                    # Draw visual input box
-                    box_rect = pygame.Rect(RIGHT_X + 80, ly - 3, 100, 24)
-                    pygame.draw.rect(self.screen, (20, 25, 50), box_rect, border_radius=4)
-                    pygame.draw.rect(self.screen, (100, 100, 200), box_rect, 1, border_radius=4)
-                    
-                    disp_val = self.step_limit_str if self.step_limit_str else "50"
-                    v_surf = self.f_note.render(disp_val, True, (255, 255, 255))
-                    self.screen.blit(v_surf, (RIGHT_X + 86, ly))
-                    
-                    # Blinking cursor
-                    if (pygame.time.get_ticks() // 500) % 2 == 0:
-                        cx = RIGHT_X + 86 + v_surf.get_width() + 2
-                        pygame.draw.line(self.screen, (255, 255, 255), (cx, ly + 2), (cx, ly + 18), 2)
-                else:
-                    v_surf = self.f_note.render(val, True, vc)
-                    self.screen.blit(v_surf, (RIGHT_X + 80, ly))
-
-        ENT_W, ENT_H = 220, 46
-        ENT_X = RIGHT_X + (RIGHT_W - ENT_W) // 2
-        ENT_Y = sh - 62
-        self._enter_rect = pygame.Rect(ENT_X, ENT_Y, ENT_W, ENT_H)
-
-        gl2 = self._enter_rect.inflate(12, 12)
-        gs2 = pygame.Surface(gl2.size, pygame.SRCALPHA)
-        pygame.draw.rect(gs2, (*_ENTER_BDR, 60), gs2.get_rect(), border_radius=16)
-        self.screen.blit(gs2, gl2.topleft)
-
-        pygame.draw.rect(self.screen, _ENTER_BG,  self._enter_rect, border_radius=14)
-        pygame.draw.rect(self.screen, _ENTER_BDR, self._enter_rect, 2, border_radius=14)
-        ent_txt = self.f_enter.render(">  START  ( Enter )", True, _ENTER_TXT)
-        ex = ENT_X + (ENT_W - ent_txt.get_width())  // 2
-        ey = ENT_Y + (ENT_H - ent_txt.get_height()) // 2
-        self.screen.blit(ent_txt, (ex, ey))
-
-        hint_txt = "Up/Down: Map   |   Left/Right: Algo   |   Enter / Click: Confirm   |   Esc: Back"
         if self.is_competitive:
-            hint_txt = "Type numbers to set Max Steps   |   " + hint_txt
+            sub_txt = "Up/Down: select Map   |   Type numbers: set Max Steps   |   Enter / Click: Start"
+        else:
+            sub_txt = "Up/Down: select Map   |   Left/Right: select Algorithm   |   Enter / Click: Confirm"
+        sub = self.font_sub.render(sub_txt, True, SUBTITLE)
+        self.screen.blit(sub, ((sw - sub.get_width()) // 2, line_y + 5))
 
-        hint = self.f_hint.render(hint_txt, True, _HINT)
-        self.screen.blit(hint, ((sw - hint.get_width()) // 2, sh - 22))
+        PADDING   = 20
+        COL_GAP   = 16
+        CONTENT_Y = line_y + 38
+        BOTTOM_Y  = sh - 70
+
+        col_w   = (sw - PADDING * 2 - COL_GAP) // 2
+        left_x  = PADDING
+        right_x = PADDING + col_w + COL_GAP
+        panel_h = BOTTOM_Y - CONTENT_Y
+
+        self._draw_map_panel(left_x, CONTENT_Y, col_w, panel_h)
+
+        if self.is_competitive:
+            self._draw_competitive_panel(right_x, CONTENT_Y, col_w, panel_h)
+        else:
+            self._draw_algo_panel(right_x, CONTENT_Y, col_w, panel_h)
+
+        btn_w, btn_h = 200, 44
+        btn_x = (sw - btn_w) // 2
+        btn_y = sh - 62
+        self.start_rect = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
+        pygame.draw.rect(self.screen, BTN_BG,  self.start_rect, border_radius=12)
+        pygame.draw.rect(self.screen, BTN_BDR, self.start_rect, 2, border_radius=12)
+        btn_lbl = self.font_btn.render(">  START  ( Enter )", True, BTN_TXT)
+        bx = btn_x + (btn_w - btn_lbl.get_width())  // 2
+        by = btn_y + (btn_h - btn_lbl.get_height()) // 2
+        self.screen.blit(btn_lbl, (bx, by))
+
+        if self.is_competitive:
+            hint = "Up/Down: Map   |   Type numbers: Max Steps   |   Enter/Click: Start   |   Esc: Back"
+        else:
+            hint = "Up/Down: Map   |   Left/Right: Algorithm   |   Enter/Click: Confirm   |   Esc: Back"
+        hint_surf = self.font_hint.render(hint, True, HINT_COLOR)
+        self.screen.blit(hint_surf, ((sw - hint_surf.get_width()) // 2, sh - 20))
+
+    def _draw_map_panel(self, x, y, w, h):
+        pygame.draw.rect(self.screen, PANEL_BG,  (x, y, w, h), border_radius=12)
+        pygame.draw.rect(self.screen, PANEL_BDR, (x, y, w, h), 1, border_radius=12)
+
+        sec = self.font_sec.render("MAP", True, SUBTITLE)
+        self.screen.blit(sec, (x + 14, y + 12))
+        div_y = y + 12 + sec.get_height() + 6
+        pygame.draw.line(self.screen, PANEL_BDR, (x + 10, div_y), (x + w - 10, div_y))
+
+        row_h   = 38
+        row_gap = 8
+        row_x   = x + 10
+        row_w   = w - 20
+        self.map_rects = []
+
+        for i, map_path in enumerate(self.map_paths):
+            ry   = div_y + 8 + i * (row_h + row_gap)
+            rect = pygame.Rect(row_x, ry, row_w, row_h)
+            self.map_rects.append(rect)
+
+            is_sel    = (i == self.selected_map)
+            bg_color  = ROW_SELECT if is_sel else ROW_NORMAL
+            bdr_color = ROW_BDR_S  if is_sel else ROW_BDR_N
+            pygame.draw.rect(self.screen, bg_color,  rect, border_radius=8)
+            pygame.draw.rect(self.screen, bdr_color, rect, 1, border_radius=8)
+
+            name      = os.path.basename(map_path)
+            txt_color = ROW_TXT_S if is_sel else ROW_TXT_N
+            name_surf = self.font_row.render(name, True, txt_color)
+            text_y    = ry + (row_h - name_surf.get_height()) // 2
+            self.screen.blit(name_surf, (row_x + 12, text_y))
+
+            if is_sel:
+                arrow = self.font_row.render(">", True, GOLD)
+                self.screen.blit(arrow, (row_x + row_w - 20, text_y))
+
+    def _draw_algo_panel(self, x, y, w, h):
+        btn_h   = 52
+        btn_gap = 6
+        n       = len(self.algorithms)
+        algo_h  = 40 + 10 + n * (btn_h + btn_gap)
+        info_h  = max(h - algo_h - 14, 60)
+
+        pygame.draw.rect(self.screen, PANEL_BG,  (x, y, w, algo_h), border_radius=12)
+        pygame.draw.rect(self.screen, PANEL_BDR, (x, y, w, algo_h), 1, border_radius=12)
+
+        sec = self.font_sec.render("ALGORITHM", True, SUBTITLE)
+        self.screen.blit(sec, (x + 14, y + 12))
+        div_y = y + 12 + sec.get_height() + 6
+        pygame.draw.line(self.screen, PANEL_BDR, (x + 10, div_y), (x + w - 10, div_y))
+
+        self.algo_rects = []
+        btn_x = x + 10
+        btn_w = w - 20
+
+        for i, key in enumerate(self.algorithms):
+            label, full, note = ALGO_INFO.get(key, (key.upper(), "", ""))
+            by    = div_y + 10 + i * (btn_h + btn_gap)
+            brect = pygame.Rect(btn_x, by, btn_w, btn_h)
+            self.algo_rects.append(brect)
+
+            is_sel = (i == self.selected_algo)
+            bg_c   = ALGO_SELECT if is_sel else ALGO_NORMAL
+            bdr_c  = ALGO_BDR_S  if is_sel else ALGO_BDR_N
+            pygame.draw.rect(self.screen, bg_c,  brect, border_radius=10)
+            pygame.draw.rect(self.screen, bdr_c, brect, 2 if is_sel else 1, border_radius=10)
+
+            lbl_c  = GOLD            if is_sel else ALGO_TXT_N
+            note_c = (200, 195, 240) if is_sel else (100, 95, 150)
+            self.screen.blit(self.font_algo.render(label, True, lbl_c),  (btn_x + 12, by + 4))
+            self.screen.blit(self.font_small.render(full,  True, ALGO_TXT_N), (btn_x + 12, by + 24))
+            self.screen.blit(self.font_small.render(note,  True, note_c),     (btn_x + 12, by + 38))
+
+            if is_sel:
+                ck = self.font_algo.render("v", True, GOLD)
+                self.screen.blit(ck, (btn_x + btn_w - ck.get_width() - 10, by + (btn_h - ck.get_height()) // 2))
+
+        info_y = y + algo_h + 14
+        pygame.draw.rect(self.screen, PANEL_BG,  (x, info_y, w, info_h), border_radius=12)
+        pygame.draw.rect(self.screen, PANEL_BDR, (x, info_y, w, info_h), 1, border_radius=12)
+
+        sec2 = self.font_sec.render("SELECTION INFO", True, SUBTITLE)
+        self.screen.blit(sec2, (x + 14, info_y + 12))
+        div2 = info_y + 12 + sec2.get_height() + 6
+        pygame.draw.line(self.screen, PANEL_BDR, (x + 10, div2), (x + w - 10, div2))
+
+        map_name   = os.path.basename(self.map_paths[self.selected_map]) if self.map_paths else "-"
+        algo_label = ALGO_INFO.get(self.algorithms[self.selected_algo], (self.algorithms[self.selected_algo].upper(),))[0]
+
+        for idx, (lbl, val, col) in enumerate([
+            ("Map  :", map_name,   (220, 215, 255)),
+            ("Algo :", algo_label, GOLD),
+        ]):
+            ry2 = div2 + 10 + idx * 26
+            self.screen.blit(self.font_small.render(lbl, True, HINT_COLOR), (x + 14, ry2))
+            self.screen.blit(self.font_small.render(val, True, col),        (x + 70,  ry2))
+
+    def _draw_competitive_panel(self, x, y, w, h):
+        agent_h = 210
+        match_h = max(h - agent_h - 14, 50)
+
+        pygame.draw.rect(self.screen, PANEL_BG,  (x, y, w, agent_h), border_radius=12)
+        pygame.draw.rect(self.screen, PANEL_BDR, (x, y, w, agent_h), 1, border_radius=12)
+
+        sec = self.font_sec.render("AGENTS", True, SUBTITLE)
+        self.screen.blit(sec, (x + 14, y + 12))
+        div_y = y + 12 + sec.get_height() + 6
+        pygame.draw.line(self.screen, PANEL_BDR, (x + 10, div_y), (x + w - 10, div_y))
+
+        card_x = x + 10
+        card_w = w - 20
+        card_h = 58
+        gap    = 6
+
+        c1_y = div_y + 10
+        c1   = pygame.Rect(card_x, c1_y, card_w, card_h)
+        pygame.draw.rect(self.screen, (20, 30, 70), c1, border_radius=8)
+        pygame.draw.rect(self.screen, AGENT1_COL,  c1, 2, border_radius=8)
+        self.screen.blit(self.font_algo.render("Agent 1  (A*)",                           True, AGENT1_COL),     (card_x + 10, c1_y + 6))
+        self.screen.blit(self.font_small.render("Algorithm: A* Chebyshev  |  agent_tan.py",  True, (130, 160, 230)), (card_x + 10, c1_y + 30))
+
+        vs_surf = self.font_algo.render("VS", True, VS_COLOR)
+        vs_y    = c1_y + card_h + gap
+        self.screen.blit(vs_surf, (x + (w - vs_surf.get_width()) // 2, vs_y))
+
+        c2_y = vs_y + vs_surf.get_height() + gap
+        c2   = pygame.Rect(card_x, c2_y, card_w, card_h)
+        pygame.draw.rect(self.screen, (20, 60, 35), c2, border_radius=8)
+        pygame.draw.rect(self.screen, AGENT2_COL,  c2, 2, border_radius=8)
+        self.screen.blit(self.font_algo.render("Agent 2  (UCS)",                              True, AGENT2_COL),     (card_x + 10, c2_y + 6))
+        self.screen.blit(self.font_small.render("Algorithm: UCS             |  agent_hieu.py", True, (120, 210, 155)), (card_x + 10, c2_y + 30))
+
+        badge = self.font_small.render("Time limit per step: 1,000 ms (enforced)", True, (200, 200, 100))
+        self.screen.blit(badge, (x + (w - badge.get_width()) // 2, c2_y + card_h + 8))
+
+        match_y = y + agent_h + 14
+        pygame.draw.rect(self.screen, PANEL_BG,  (x, match_y, w, match_h), border_radius=12)
+        pygame.draw.rect(self.screen, PANEL_BDR, (x, match_y, w, match_h), 1, border_radius=12)
+
+        sec2 = self.font_sec.render("MATCH SETTINGS", True, SUBTITLE)
+        self.screen.blit(sec2, (x + 14, match_y + 12))
+        div2 = match_y + 12 + sec2.get_height() + 6
+        pygame.draw.line(self.screen, PANEL_BDR, (x + 10, div2), (x + w - 10, div2))
+
+        map_name = os.path.basename(self.map_paths[self.selected_map]) if self.map_paths else "-"
+
+        ry_map = div2 + 12
+        self.screen.blit(self.font_small.render("Map   :", True, HINT_COLOR),     (x + 14, ry_map))
+        self.screen.blit(self.font_small.render(map_name,  True, (220, 215, 255)), (x + 75, ry_map))
+
+        ry_step = ry_map + 28
+        self.screen.blit(self.font_small.render("Steps :", True, HINT_COLOR), (x + 14, ry_step))
+
+        box = pygame.Rect(x + 75, ry_step - 3, 80, 22)
+        pygame.draw.rect(self.screen, (20, 25, 50),    box, border_radius=4)
+        pygame.draw.rect(self.screen, (100, 100, 200), box, 1, border_radius=4)
+
+        disp     = self.step_limit_str if self.step_limit_str else "50"
+        val_surf = self.font_small.render(disp, True, (255, 255, 255))
+        self.screen.blit(val_surf, (x + 79, ry_step))
+
+        if (pygame.time.get_ticks() // 500) % 2 == 0:
+            cx = x + 79 + val_surf.get_width() + 2
+            pygame.draw.line(self.screen, (255, 255, 255), (cx, ry_step + 2), (cx, ry_step + 16), 1)
+
+        if not self.step_limit_str:
+            self.screen.blit(self.font_small.render("(default: 50)", True, (90, 90, 140)), (x + 162, ry_step))
 
     def get_selection(self):
-        map_path = self.map_paths[self.selected_map_index]
-        algo = self.algorithms[self.selected_algo_index]
+        map_path = self.map_paths[self.selected_map]
+        algo     = self.algorithms[self.selected_algo]
         if self.is_competitive:
-            step_limit = int(self.step_limit_str) if self.step_limit_str else 50
-            return map_path, algo, step_limit
+            n_steps = int(self.step_limit_str) if self.step_limit_str else 50
+            return map_path, algo, n_steps
         return map_path, algo

@@ -1,6 +1,6 @@
 import heapq
-from core.rules import Rules
-from search.search_algorithm import SearchAlgorithm
+from source.core.rules import Rules
+from source.search.search_algorithm import SearchAlgorithm
 
 def reconstruct_path(goal_state, parent):
     path = []

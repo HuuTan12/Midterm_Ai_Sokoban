@@ -1,5 +1,5 @@
-from core.action import Action
-from core.competitive_state import CompetitiveState
+from source.core.action import Action
+from source.core.competitive_state import CompetitiveState
 
 class CompetitiveRules:
     Direction_Map = {

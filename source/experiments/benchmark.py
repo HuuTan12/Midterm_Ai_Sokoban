@@ -2,75 +2,57 @@ import time
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
-from core.map_parser import MapParser
-from search.ucs import UCS
-from search.astar import AStar
+from source.core.map_parser import MapParser
+from source.search.ucs import UCS
+from source.search.astar import AStar
 
-def run_benchmark(map_path):
-    print(f"Benchmarking on: {os.path.basename(map_path)}")
+MAPS_DIR   = os.path.join(os.path.dirname(__file__), '..', 'maps')
+MAP_NAMES  = ['Map1.txt', 'Map2.txt', 'Map3.txt', 'Map4.txt']
+TIMEOUT    = 60
+N_RUNS     = 5
 
+def run_one(solver_cls, board, start_state):
+    t0 = time.perf_counter()
+    path, cost, expanded, max_q = solver_cls().search(
+        start_state, board, timeout_seconds=TIMEOUT
+    )
+    elapsed = time.perf_counter() - t0
+    return elapsed, path, cost, expanded, max_q
+
+def benchmark_map(map_path):
+    map_name = os.path.basename(map_path)
     map_lines = MapParser.load_map(map_path)
     board, start_state = MapParser.parse_level(map_lines)
+    
+    print(f"\nBenchmarking: {map_name}")
+    print("-" * 72)
+    print(f"{'Algorithm':<22} | {'Avg Time (s)':<14} | {'Expanded Nodes':<16} | {'Max Queue':<12} | {'Cost'}")
+    print("-" * 72)
 
-    number_of_runs = 100
+    for label, solver_cls in [("UCS", UCS), ("A*", AStar)]:
+        elapsed0, path0, cost0, expanded0, max_q0 = run_one(solver_cls, board, start_state)
 
-    ucs_total_time = 0
-    astar_total_time = 0
+        if path0 is None:
+            print(f"  {label:<20} | {'TIMEOUT':<14} | {expanded0:>16,} | {max_q0:>12,} | -")
+            continue
 
-    ucs_result = None
-    astar_result = None
+        total_time = elapsed0
+        for _ in range(N_RUNS - 1):
+            t, _, _, _, _ = run_one(solver_cls, board, start_state)
+            total_time += t
+        avg_time = total_time / N_RUNS
 
-    for _ in range(number_of_runs):
-        start_time = time.perf_counter()
-        ucs_result = UCS().search(start_state, board)
-        ucs_total_time += time.perf_counter() - start_time
+        print(f"  {label:<20} | {avg_time:<14.6f} | {expanded0:>16,} | {max_q0:>12,} | {cost0}")
 
-    for _ in range(number_of_runs):
-        start_time = time.perf_counter()
-        astar_result = AStar().search(start_state, board)
-        astar_total_time += time.perf_counter() - start_time
+    print("-" * 72)
 
-    ucs_time = ucs_total_time / number_of_runs
-    astar_time = astar_total_time / number_of_runs
-
-    print("-" * 70)
-    print(
-        f"{'Algorithm':<20} | "
-        f"{'Time (s)':<15} | "
-        f"{'Expanded Nodes':<15} | "
-        f"{'Max Queue'}"
-    )
-    print("-" * 70)
-
-    print(
-        f"{'UCS':<20} | "
-        f"{ucs_time:<15.6f} | "
-        f"{ucs_result[2]:<15} | "
-        f"{ucs_result[3]}"
-    )
-
-    print(
-        f"{'A* (Chebyshev)':<20} | "
-        f"{astar_time:<15.6f} | "
-        f"{astar_result[2]:<15} | "
-        f"{astar_result[3]}"
-    )
-
-    print("-" * 70)
-    print(f"Number of runs: {number_of_runs}")
-
-    print("\n========== RESULT ==========")
-    print("UCS Cost:", ucs_result[1])
-    print("A* Cost:", astar_result[1])
-
-    print("UCS Path:", ucs_result[0])
-    print("A* Path:", astar_result[0])
+def main():
+    for map_name in MAP_NAMES:
+        map_path = os.path.join(MAPS_DIR, map_name)
+        if os.path.exists(map_path):
+            benchmark_map(map_path)
 
 if __name__ == "__main__":
-    map_file = os.path.join(os.path.dirname(__file__), "..", "maps", "example_map.txt")
-    if os.path.exists(map_file):
-        run_benchmark(map_file)
-    else:
-        print(f"Error: Could not find file {map_file}.")
+    main()

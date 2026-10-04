@@ -38,8 +38,8 @@ class CompetitiveGameScreen:
             if p not in sys.path:
                 sys.path.insert(0, p)
 
-        from core.map_parser import MapParser
-        from core.competitive_rules import CompetitiveRules
+        from source.core.map_parser import MapParser
+        from source.core.competitive_rules import CompetitiveRules
 
         map_lines  = MapParser.load_map(self.map_path)
         board, comp_state = MapParser.parse_competitive_level(map_lines)

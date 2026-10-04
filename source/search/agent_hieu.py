@@ -1,8 +1,8 @@
-from search.ucs import UCS
-from core.state import State
-from core.board import Board
-from core.competitive_state import CompetitiveState
-from core.rules import Rules
+from source.search.ucs import UCS
+from source.core.state import State
+from source.core.board import Board
+from source.core.competitive_state import CompetitiveState
+from source.core.rules import Rules
 
 class AgentHieu:
     def __init__(self):

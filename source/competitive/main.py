@@ -21,10 +21,10 @@ def is_competitive_map(map_path):
 
 
 def real_competitive_search(map_path, algorithm, n_steps=50):
-    from core.map_parser import MapParser
-    from core.competitive_rules import CompetitiveRules
-    from search.agent_tan import AgentTan
-    from search.agent_hieu import AgentHieu
+    from source.core.map_parser import MapParser
+    from source.core.competitive_rules import CompetitiveRules
+    from source.search.agent_tan import AgentTan
+    from source.search.agent_hieu import AgentHieu
 
     map_lines = MapParser.load_map(map_path)
     board, state = MapParser.parse_competitive_level(map_lines)

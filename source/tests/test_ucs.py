@@ -1,16 +1,16 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
-from core.map_parser import MapParser
-from search.ucs import UCS
+from source.core.map_parser import MapParser
+from source.search.ucs import UCS
+
+MAP_PATH = os.path.join(os.path.dirname(__file__), '..', 'maps', 'Map1.txt')
 
 def test_ucs_algorithm():
-    map_path = os.path.join(os.path.dirname(__file__), "..", "maps", "example_map.txt")
-    print(f"Loading map from: {map_path}...")
-
-    lines = MapParser.load_map(map_path)
+    print(f"Loading map from: {MAP_PATH}...")
+    lines = MapParser.load_map(MAP_PATH)
     board, init_state = MapParser.parse_level(lines)
 
     print("AI is calculating path with UCS...")
@@ -18,9 +18,9 @@ def test_ucs_algorithm():
 
     if path:
         print("\n SOLUTION FOUND!")
-        print(f"Total cost: {cost}")
-        print(f"Number of steps: {len(path)}")
-        print(f"Action details:\n{path}")
+        print(f"Total cost:    {cost}")
+        print(f"Steps:         {len(path)}")
+        print(f"Nodes expanded:{expanded}")
     else:
         print("\n DEAD END: No path found!")
 

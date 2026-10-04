@@ -1,5 +1,5 @@
-from core.action import Action
-from core.state import State
+from source.core.action import Action
+from source.core.state import State
 
 class Rules:
     Directions = {

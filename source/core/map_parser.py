@@ -1,5 +1,5 @@
-from core.board import Board
-from core.state import State
+from source.core.board import Board
+from source.core.state import State
 
 class MapParser:
     @staticmethod
@@ -37,7 +37,7 @@ class MapParser:
 
     @staticmethod
     def parse_competitive_level(map_lines):
-        from core.competitive_state import CompetitiveState
+        from source.core.competitive_state import CompetitiveState
         walls = set()
         goals = set()
         boxes = []
