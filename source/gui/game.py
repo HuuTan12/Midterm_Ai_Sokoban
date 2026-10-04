@@ -15,11 +15,11 @@ import time
 
 
 class AppState:
-    MENU        = "menu"
-    SOLVING     = "solving"
-    PLAYING     = "playing"
+    MENU = "menu"
+    SOLVING = "solving"
+    PLAYING = "playing"
     NO_SOLUTION = "no_solution"
-    BACK        = "back"
+    BACK = "back"
 
 
 class Game:

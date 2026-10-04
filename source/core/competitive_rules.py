@@ -4,8 +4,8 @@ class CompetitiveRules:
     Direction_Map = {
         "North": (-1, 0),
         "South": (1, 0),
-        "West":  (0, -1),
-        "East":  (0, 1)
+        "West": (0, -1),
+        "East": (0, 1)
     }
 
     @staticmethod
@@ -50,24 +50,19 @@ class CompetitiveRules:
         np1, box_push1 = check_move(p1, np1, d1, p2)
         np2, box_push2 = check_move(p2, np2, d2, p1)
 
-        # Both want same cell: Agent 1 has priority
         if np1 == np2 and np1 != p1:
             np2, box_push2 = p2, None
 
-        # Swap (pass through each other): both stay
         if np1 == p2 and np2 == p1:
             np1, box_push1 = p1, None
             np2, box_push2 = p2, None
 
-        # Box pushed by A1 would land on A2
         if box_push1 and box_push1[1] == np2:
             np2, box_push2 = p2, None
-
-        # Box pushed by A2 would land on A1
+            
         if box_push2 and box_push2[1] == np1:
             np1, box_push1 = p1, None
 
-        # Both push to same box target cell: Agent 1 priority
         if box_push1 and box_push2 and box_push1[1] == box_push2[1]:
             np2, box_push2 = p2, None
 

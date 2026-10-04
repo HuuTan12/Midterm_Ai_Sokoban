@@ -5,8 +5,8 @@ class Rules:
     Directions = {
         Action.NORTH: (-1, 0),
         Action.SOUTH: (1, 0),
-        Action.WEST:  (0, -1),
-        Action.EAST:  (0, 1),
+        Action.WEST: (0, -1),
+        Action.EAST: (0, 1),
     }
 
     @staticmethod

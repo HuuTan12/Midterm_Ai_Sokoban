@@ -2,13 +2,13 @@ from enum import Enum
 import pygame
 
 class Command(Enum):
-    TOGGLE_PAUSE  = "toggle_pause"
-    STEP_FORWARD  = "step_forward"
+    TOGGLE_PAUSE = "toggle_pause"
+    STEP_FORWARD = "step_forward"
     STEP_BACKWARD = "step_backward"
     JUMP_TO_START = "jump_to_start"
-    JUMP_TO_END   = "jump_to_end"
-    QUIT          = "quit"
-    BACK_TO_MENU  = "back_to_menu"
+    JUMP_TO_END = "jump_to_end"
+    QUIT = "quit"
+    BACK_TO_MENU = "back_to_menu"
 
 def map_event_to_command(event):
     if event.type == pygame.QUIT:

@@ -1,19 +1,19 @@
 import pygame
 
-COLOR_BG       = (245, 245, 220)
-COLOR_WALL     = (80,  80,  80)
-COLOR_FLOOR    = (220, 210, 185)
-COLOR_TARGET   = (220,  60,  60)
-COLOR_BOX      = (200, 130,  50)
-COLOR_BOX_ON   = (100,  60,  20)
-COLOR_PLAYER   = ( 50,  80, 200)
-COLOR_WHITE    = (255, 255, 255)
+COLOR_BG = (245, 245, 220)
+COLOR_WALL = (80,  80,  80)
+COLOR_FLOOR = (220, 210, 185)
+COLOR_TARGET = (220,  60,  60)
+COLOR_BOX = (200, 130,  50)
+COLOR_BOX_ON = (100,  60,  20)
+COLOR_PLAYER = ( 50,  80, 200)
+COLOR_WHITE = (255, 255, 255)
 COLOR_PANEL_BG = ( 15,  20,  45)
 COLOR_PANEL_BDR= ( 65,  65, 130)
-COLOR_YELLOW   = (255, 215,   0)
-COLOR_GREEN    = ( 80, 220, 100)
-COLOR_GRAY     = (140, 135, 185)
-COLOR_RED      = (220,  60,  60)
+COLOR_YELLOW = (255, 215,   0)
+COLOR_GREEN = ( 80, 220, 100)
+COLOR_GRAY = (140, 135, 185)
+COLOR_RED = (220,  60,  60)
 
 PANEL_H = 105
 
@@ -107,9 +107,9 @@ class Renderer:
     def draw_state(self, state):
         for bpos in state.boxes:
             row, col = bpos
-            rect    = self._cell_rect(row, col)
+            rect = self._cell_rect(row, col)
             on_goal = self.board.is_goal(bpos)
-            img     = self.img_box_on if on_goal else self.img_box
+            img = self.img_box_on if on_goal else self.img_box
             if img:
                 self.screen.blit(img, rect)
             else:
@@ -132,38 +132,48 @@ class Renderer:
         sw = self.screen.get_width()
 
         algo_str = info.get("algorithm", "?").upper()
-        step     = info.get("step", 0)
-        total    = info.get("total_steps", 0)
-        cost     = info.get("cost", 0)
+        step = info.get("step", 0)
+        total = info.get("total_steps", 0)
+        cost = info.get("cost", 0)
         expanded = info.get("expanded", 0)
-        status   = info.get("status", "paused").upper()
+        status = info.get("status", "paused").upper()
 
         surf_algo = self.font_big.render(f"Algorithm: {algo_str}", True, COLOR_YELLOW)
         self.screen.blit(surf_algo, (20, 10))
 
-        status_color = COLOR_GREEN if status == "PLAYING" else COLOR_RED
+        if status == "PLAYING":
+            status_color = COLOR_GREEN
+        else:
+            status_color = COLOR_RED
         if status == "SOLVED":
             status_color = COLOR_YELLOW
-        surf_status = self.font_big.render(status, True, status_color)
-        self.screen.blit(surf_status, (sw - surf_status.get_width() - 20, 10))
 
-        info_str  = f"Step: {step} / {total}    |    Cost: {cost}    |    Nodes expanded: {expanded:,}"
+        surf_status = self.font_big.render(status, True, status_color)
+        status_x = sw - surf_status.get_width() - 20
+        self.screen.blit(surf_status, (status_x, 10))
+
+        info_str = f"Step: {step} / {total} | Cost: {cost} | Nodes expanded: {expanded:,}"
         surf_info = self.font_ui.render(info_str, True, COLOR_WHITE)
         self.screen.blit(surf_info, (20, 45))
 
         pygame.draw.line(self.screen, COLOR_PANEL_BDR, (20, 75), (sw - 20, 75))
 
-        hint_str  = "Space: Play/Pause  |  <- ->: Step  |  Shift+<->: First/Last  |  Home/End  |  Esc: Menu"
-        surf_hint = pygame.font.SysFont("arial", 18).render(hint_str, True, COLOR_GRAY)
-        self.screen.blit(surf_hint, ((sw - surf_hint.get_width()) // 2, 82))
+        hint_str = "Space: Play/Pause  |  <- ->: Step  |  Shift+<->: First/Last  |  Home/End  |  Esc: Menu"
+        font_hint = pygame.font.SysFont("arial", 18)
+        surf_hint = font_hint.render(hint_str, True, COLOR_GRAY)
+        hint_x = (sw - surf_hint.get_width()) // 2
+        self.screen.blit(surf_hint, (hint_x, 82))
 
     def draw_message(self, text, color=COLOR_WHITE):
         sw, sh = self.screen.get_size()
-        surf   = self.font_big.render(text, True, color)
-        x = (sw - surf.get_width())  // 2
+
+        surf = self.font_big.render(text, True, color)
+        x = (sw - surf.get_width()) // 2
         y = (sh - surf.get_height()) // 2
-        bg_rect = surf.get_rect(center=(sw//2, sh//2)).inflate(30, 20)
+
+        bg_rect = surf.get_rect(center=(sw // 2, sh // 2)).inflate(30, 20)
         bg_surf = pygame.Surface(bg_rect.size, pygame.SRCALPHA)
         bg_surf.fill((0, 0, 0, 160))
+
         self.screen.blit(bg_surf, bg_rect.topleft)
         self.screen.blit(surf, (x, y))

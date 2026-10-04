@@ -1,17 +1,17 @@
 import pygame
 import time
 
-WALL_COLOR          = (105, 105, 105)
-BG_COLOR            = (240, 240, 240)
-TARGET_COLOR        = (255,  50,  50)
-PLAYER1_COLOR       = ( 50,  50, 255)
-BOX1_COLOR          = (100, 100, 255)
+WALL_COLOR = (105, 105, 105)
+BG_COLOR = (240, 240, 240)
+TARGET_COLOR = (255,  50,  50)
+PLAYER1_COLOR = ( 50,  50, 255)
+BOX1_COLOR = (100, 100, 255)
 BOX1_ON_TARGET_COLOR= (  0,   0, 150)
-PLAYER2_COLOR       = ( 50, 255,  50)
-BOX2_COLOR          = (100, 255, 100)
+PLAYER2_COLOR = ( 50, 255,  50)
+BOX2_COLOR = (100, 255, 100)
 BOX2_ON_TARGET_COLOR= (  0, 150,   0)
-NEUTRAL_BOX_COLOR   = (205, 133,  63)
-CELL_SIZE           = 40
+NEUTRAL_BOX_COLOR = (205, 133,  63)
+CELL_SIZE = 40
 
 
 class CompetitiveGameScreen:
@@ -44,25 +44,49 @@ class CompetitiveGameScreen:
         map_lines  = MapParser.load_map(self.map_path)
         board, comp_state = MapParser.parse_competitive_level(map_lines)
 
-        walls   = {(c, r) for (r, c) in board.walls}
+        walls = {(c, r) for (r, c) in board.walls}
         targets = {(c, r) for (r, c) in board.goals}
 
         def to_display(s):
             b_dict = {}
-            for (r, c) in s.neutral_boxes: b_dict[(c, r)] = 0
-            for (r, c) in s.agent1_boxes:  b_dict[(c, r)] = 1
-            for (r, c) in s.agent2_boxes:  b_dict[(c, r)] = 2
-            p1 = (comp_state.agent1_pos[1], comp_state.agent1_pos[0]) \
-                 if s.agent1_pos is None else (s.agent1_pos[1], s.agent1_pos[0])
-            p2 = (comp_state.agent2_pos[1], comp_state.agent2_pos[0]) \
-                 if s.agent2_pos is None else (s.agent2_pos[1], s.agent2_pos[0])
+
+            for (r, c) in s.neutral_boxes:
+                b_dict[(c, r)] = 0
+            for (r, c) in s.agent1_boxes:
+                b_dict[(c, r)] = 1
+            for (r, c) in s.agent2_boxes:
+                b_dict[(c, r)] = 2
+
+            if s.agent1_pos is None:
+                p1 = (comp_state.agent1_pos[1], comp_state.agent1_pos[0])
+            else:
+                p1 = (s.agent1_pos[1], s.agent1_pos[0])
+
+            if s.agent2_pos is None:
+                p2 = (comp_state.agent2_pos[1], comp_state.agent2_pos[0])
+            else:
+                p2 = (s.agent2_pos[1], s.agent2_pos[0])
+
             return p1, p2, b_dict
 
-        states    = [to_display(comp_state)]
-        max_steps = max(len(actions1), len(actions2)) if (actions1 or actions2) else 0
+        states = [to_display(comp_state)]
+
+        if actions1 or actions2:
+            max_steps = max(len(actions1), len(actions2))
+        else:
+            max_steps = 0
+
         for i in range(max_steps):
-            a1 = actions1[i] if i < len(actions1) else None
-            a2 = actions2[i] if i < len(actions2) else None
+            if i < len(actions1):
+                a1 = actions1[i]
+            else:
+                a1 = None
+
+            if i < len(actions2):
+                a2 = actions2[i]
+            else:
+                a2 = None
+
             comp_state = CompetitiveRules.apply_actions(comp_state, a1, a2, board)
             states.append(to_display(comp_state))
 
@@ -72,26 +96,32 @@ class CompetitiveGameScreen:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 return "BACK_TO_MENU"
+
             elif event.key == pygame.K_SPACE:
                 self.is_playing = not self.is_playing
+
             elif event.key == pygame.K_RIGHT:
                 self.is_playing = False
                 if event.mod & pygame.KMOD_SHIFT:
                     self.current_step = len(self.states) - 1
                 elif self.current_step < len(self.states) - 1:
                     self.current_step += 1
+
             elif event.key == pygame.K_LEFT:
                 self.is_playing = False
                 if event.mod & pygame.KMOD_SHIFT:
                     self.current_step = 0
                 elif self.current_step > 0:
                     self.current_step -= 1
+
             elif event.key == pygame.K_HOME:
-                self.is_playing   = False
+                self.is_playing = False
                 self.current_step = 0
+
             elif event.key == pygame.K_END:
-                self.is_playing   = False
+                self.is_playing = False
                 self.current_step = len(self.states) - 1
+
         return None
 
     def update(self):
@@ -99,19 +129,20 @@ class CompetitiveGameScreen:
             now = time.time()
             if now - self.last_update_time > self.play_speed:
                 if self.current_step < len(self.states) - 1:
-                    self.current_step     += 1
-                    self.last_update_time  = now
+                    self.current_step += 1
+                    self.last_update_time = now
                 else:
                     self.is_playing = False
 
     def draw(self):
         if self.walls:
-            max_wx = max(x for x, y in self.walls)
-            max_wy = max(y for x, y in self.walls)
+            max_wx = max([x for x, y in self.walls])
+            max_wy = max([y for x, y in self.walls])
         else:
-            max_wx, max_wy = 10, 10
+            max_wx = 10
+            max_wy = 10
 
-        sw, sh  = self.screen.get_size()
+        sw, sh = self.screen.get_size()
         PANEL_H = 105
 
         if not hasattr(self, 'cell_size'):
@@ -123,8 +154,8 @@ class CompetitiveGameScreen:
 
         map_pixel_w = (max_wx + 1) * self.cell_size
         map_pixel_h = (max_wy + 1) * self.cell_size
-        offset_x    = max(0, (sw - map_pixel_w) // 2)
-        offset_y    = PANEL_H + max(0, (sh - PANEL_H - map_pixel_h) // 2)
+        offset_x = max(0, (sw - map_pixel_w) // 2)
+        offset_y = PANEL_H + max(0, (sh - PANEL_H - map_pixel_h) // 2)
 
         if not hasattr(self, 'img_wall'):
             import os
@@ -137,20 +168,20 @@ class CompetitiveGameScreen:
                     return pygame.transform.scale(img, (self.cell_size, self.cell_size))
                 return None
 
-            self.img_wall        = load_img('tiles', 'wall.png')
-            self.img_floor       = load_img('tiles', 'floor.png')
-            self.img_goal        = load_img('tiles', 'goal.png')
-            self.img_box1        = load_img('tiles', 'box.png')
-            self.img_box1_on     = load_img('tiles', 'box_on_goal.png')
-            self.img_box2        = load_img('tiles', 'box2.png')
-            self.img_box2_on     = load_img('tiles', 'box2_on_goal.png')
+            self.img_wall = load_img('tiles', 'wall.png')
+            self.img_floor = load_img('tiles', 'floor.png')
+            self.img_goal = load_img('tiles', 'goal.png')
+            self.img_box1 = load_img('tiles', 'box.png')
+            self.img_box1_on = load_img('tiles', 'box_on_goal.png')
+            self.img_box2 = load_img('tiles', 'box2.png')
+            self.img_box2_on = load_img('tiles', 'box2_on_goal.png')
             self.img_box_neutral = load_img('tiles', 'box.png')
-            self.img_player1     = load_img('sprites', 'player.png')
-            self.img_player2     = load_img('sprites', 'player2.png')
+            self.img_player1 = load_img('sprites', 'player.png')
+            self.img_player2 = load_img('sprites', 'player2.png')
 
             bg_path = os.path.join(assets_dir, 'backgrounds', 'bg_main.jpg')
             if os.path.exists(bg_path):
-                bg_img  = pygame.image.load(bg_path).convert()
+                bg_img = pygame.image.load(bg_path).convert()
                 self.img_bg = pygame.transform.scale(bg_img, self.screen.get_size())
             else:
                 self.img_bg = None
@@ -164,7 +195,8 @@ class CompetitiveGameScreen:
 
         for gy in range(max_wy + 1):
             for gx in range(max_wx + 1):
-                rect = (offset_x + gx * self.cell_size, offset_y + gy * self.cell_size,
+                rect = (offset_x + gx * self.cell_size,
+                        offset_y + gy * self.cell_size,
                         self.cell_size, self.cell_size)
                 if self.img_floor:
                     self.screen.blit(self.img_floor, rect)
@@ -172,7 +204,8 @@ class CompetitiveGameScreen:
                     pygame.draw.rect(self.screen, BG_COLOR, rect)
 
         for wx, wy in self.walls:
-            rect = (offset_x + wx * self.cell_size, offset_y + wy * self.cell_size,
+            rect = (offset_x + wx * self.cell_size,
+                    offset_y + wy * self.cell_size,
                     self.cell_size, self.cell_size)
             if self.img_wall:
                 self.screen.blit(self.img_wall, rect)
@@ -180,89 +213,126 @@ class CompetitiveGameScreen:
                 pygame.draw.rect(self.screen, WALL_COLOR, rect)
 
         for tx, ty in self.targets:
-            rect = (offset_x + tx * self.cell_size, offset_y + ty * self.cell_size,
+            rect = (offset_x + tx * self.cell_size,
+                    offset_y + ty * self.cell_size,
                     self.cell_size, self.cell_size)
             if self.img_goal:
                 self.screen.blit(self.img_goal, rect)
             else:
+                center_x = offset_x + tx * self.cell_size + self.cell_size // 2
+                center_y = offset_y + ty * self.cell_size + self.cell_size // 2
                 pygame.draw.circle(self.screen, TARGET_COLOR,
-                                   (offset_x + tx * self.cell_size + self.cell_size // 2,
-                                    offset_y + ty * self.cell_size + self.cell_size // 2),
+                                   (center_x, center_y),
                                    self.cell_size // 4)
 
         for (bx, by), owner in boxes_dict.items():
-            rect      = (offset_x + bx * self.cell_size, offset_y + by * self.cell_size,
-                         self.cell_size, self.cell_size)
+            rect = (offset_x + bx * self.cell_size,
+                    offset_y + by * self.cell_size,
+                    self.cell_size, self.cell_size)
             on_target = (bx, by) in self.targets
 
             if owner == 1:
-                img   = self.img_box1_on if on_target else self.img_box1
-                color = BOX1_ON_TARGET_COLOR if on_target else BOX1_COLOR
+                if on_target:
+                    img = self.img_box1_on
+                    color = BOX1_ON_TARGET_COLOR
+                else:
+                    img = self.img_box1
+                    color = BOX1_COLOR
             elif owner == 2:
-                img   = self.img_box2_on if on_target else self.img_box2
-                color = BOX2_ON_TARGET_COLOR if on_target else BOX2_COLOR
+                if on_target:
+                    img = self.img_box2_on
+                    color = BOX2_ON_TARGET_COLOR
+                else:
+                    img = self.img_box2
+                    color = BOX2_COLOR
             else:
-                img   = self.img_box_neutral
+                img = self.img_box_neutral
                 color = NEUTRAL_BOX_COLOR
 
             if img:
                 self.screen.blit(img, rect)
             else:
-                inner = (offset_x + bx * self.cell_size + 2, offset_y + by * self.cell_size + 2,
+                inner = (offset_x + bx * self.cell_size + 2,
+                         offset_y + by * self.cell_size + 2,
                          self.cell_size - 4, self.cell_size - 4)
                 pygame.draw.rect(self.screen, color, inner)
 
         px, py = p1_pos
-        rect1  = (offset_x + px * self.cell_size, offset_y + py * self.cell_size,
-                  self.cell_size, self.cell_size)
+        rect1 = (offset_x + px * self.cell_size,
+                 offset_y + py * self.cell_size,
+                 self.cell_size, self.cell_size)
         if self.img_player1:
             self.screen.blit(self.img_player1, rect1)
         else:
+            center_x = offset_x + px * self.cell_size + self.cell_size // 2
+            center_y = offset_y + py * self.cell_size + self.cell_size // 2
             pygame.draw.circle(self.screen, PLAYER1_COLOR,
-                               (offset_x + px * self.cell_size + self.cell_size // 2,
-                                offset_y + py * self.cell_size + self.cell_size // 2),
+                               (center_x, center_y),
                                self.cell_size // 2 - 4)
 
         px2, py2 = p2_pos
-        rect2    = (offset_x + px2 * self.cell_size, offset_y + py2 * self.cell_size,
-                    self.cell_size, self.cell_size)
+        rect2 = (offset_x + px2 * self.cell_size,
+                 offset_y + py2 * self.cell_size,
+                 self.cell_size, self.cell_size)
         if self.img_player2:
             self.screen.blit(self.img_player2, rect2)
         else:
+            center_x = offset_x + px2 * self.cell_size + self.cell_size // 2
+            center_y = offset_y + py2 * self.cell_size + self.cell_size // 2
             pygame.draw.circle(self.screen, PLAYER2_COLOR,
-                               (offset_x + px2 * self.cell_size + self.cell_size // 2,
-                                offset_y + py2 * self.cell_size + self.cell_size // 2),
+                               (center_x, center_y),
                                self.cell_size // 2 - 4)
 
-        PANEL_H    = 105
-        sw         = self.screen.get_width()
+        PANEL_H = 105
+        sw = self.screen.get_width()
         panel_rect = pygame.Rect(0, 0, sw, PANEL_H)
         pygame.draw.rect(self.screen, (15, 20, 45), panel_rect)
 
         total_steps = len(self.states) - 1
-        is_ended    = (self.current_step >= total_steps)
-        status_text = "SOLVED" if is_ended else ("PLAYING" if self.is_playing else "PAUSED")
+        is_ended = (self.current_step >= total_steps)
 
-        score1 = sum(1 for (bx, by), owner in boxes_dict.items() if owner == 1 and (bx, by) in self.targets)
-        score2 = sum(1 for (bx, by), owner in boxes_dict.items() if owner == 2 and (bx, by) in self.targets)
+        if is_ended:
+            status_text = "SOLVED"
+        elif self.is_playing:
+            status_text = "PLAYING"
+        else:
+            status_text = "PAUSED"
+
+        score1 = 0
+        score2 = 0
+        for (bx, by), owner in boxes_dict.items():
+            if owner == 1 and (bx, by) in self.targets:
+                score1 += 1
+            if owner == 2 and (bx, by) in self.targets:
+                score2 += 1
 
         winner_text = ""
         if is_ended:
-            if score1 > score2:   winner_text = "Agent 1 WINS!"
-            elif score2 > score1: winner_text = "Agent 2 WINS!"
-            else:                 winner_text = "DRAW!"
+            if score1 > score2:
+                winner_text = "Agent 1 WINS!"
+            elif score2 > score1:
+                winner_text = "Agent 2 WINS!"
+            else:
+                winner_text = "DRAW!"
 
-        f_title    = pygame.font.SysFont("arial", 28, bold=True)
-        title_str  = "COMPETITIVE MODE (A* vs UCS)" + winner_text
+        f_title = pygame.font.SysFont("arial", 28, bold=True)
+        title_str = "COMPETITIVE MODE (A* vs UCS)" + winner_text
         surf_title = f_title.render(title_str, True, (255, 215, 0))
         self.screen.blit(surf_title, (20, 10))
 
-        c_status    = (80, 220, 100) if status_text == "PLAYING" else ((255, 215, 0) if status_text == "SOLVED" else (220, 60, 60))
-        surf_status = f_title.render(status_text, True, c_status)
-        self.screen.blit(surf_status, (sw - surf_status.get_width() - 20, 10))
+        if status_text == "PLAYING":
+            c_status = (80, 220, 100)
+        elif status_text == "SOLVED":
+            c_status = (255, 215, 0)
+        else:
+            c_status = (220, 60, 60)
 
-        f_info      = pygame.font.SysFont("arial", 22)
-        info_part   = f_info.render(f"Step: {self.current_step} / {total_steps}    |    ", True, (255, 255, 255))
+        surf_status = f_title.render(status_text, True, c_status)
+        status_x = sw - surf_status.get_width() - 20
+        self.screen.blit(surf_status, (status_x, 10))
+
+        f_info = pygame.font.SysFont("arial", 22)
+        info_part = f_info.render(f"Step: {self.current_step} / {total_steps}    |    ", True, (255, 255, 255))
         self.screen.blit(info_part, (20, 45))
         cx = 20 + info_part.get_width()
 
@@ -279,28 +349,38 @@ class CompetitiveGameScreen:
 
         pygame.draw.line(self.screen, (65, 65, 130), (20, 75), (sw - 20, 75))
 
-        hint_str  = "Space: Play/Pause  |  <- ->: Step  |  Shift+<->: First/Last  |  Home/End  |  Esc: Menu"
-        surf_hint = pygame.font.SysFont("arial", 18).render(hint_str, True, (140, 135, 185))
-        self.screen.blit(surf_hint, ((sw - surf_hint.get_width()) // 2, 82))
+        hint_str = "Space: Play/Pause  |  <- ->: Step  |  Shift+<->: First/Last  |  Home/End  |  Esc: Menu"
+        font_hint = pygame.font.SysFont("arial", 18)
+        surf_hint = font_hint.render(hint_str, True, (140, 135, 185))
+        hint_x = (sw - surf_hint.get_width()) // 2
+        self.screen.blit(surf_hint, (hint_x, 82))
 
         if is_ended:
             font_huge = pygame.font.SysFont("arial", 50, bold=True)
-            msg       = winner_text.replace(" - ", "")
-            c_win     = (100, 150, 255) if score1 > score2 else ((255, 100, 100) if score2 > score1 else (255, 215, 0))
+            msg = winner_text.replace(" - ", "")
+
+            if score1 > score2:
+                c_win = (100, 150, 255)
+            elif score2 > score1:
+                c_win = (255, 100, 100)
+            else:
+                c_win = (255, 215, 0)
+
             text_surf = font_huge.render(msg, True, c_win)
 
-            sh_local  = self.screen.get_height()
-            overlay   = pygame.Surface((sw, sh_local), pygame.SRCALPHA)
+            sh_local = self.screen.get_height()
+            overlay = pygame.Surface((sw, sh_local), pygame.SRCALPHA)
             overlay.fill((0, 0, 0, 150))
             self.screen.blit(overlay, (0, 0))
 
-            tx = (sw - text_surf.get_width())  // 2
+            tx = (sw - text_surf.get_width()) // 2
             ty = (sh_local - text_surf.get_height()) // 2
-            outline   = font_huge.render(msg, True, (0, 0, 0))
-            for dx, dy in [(-2,-2), (2,-2), (-2,2), (2,2)]:
+            outline = font_huge.render(msg, True, (0, 0, 0))
+            for dx, dy in [(-2, -2), (2, -2), (-2, 2), (2, 2)]:
                 self.screen.blit(outline, (tx + dx, ty + dy))
             self.screen.blit(text_surf, (tx, ty))
 
             font_small = pygame.font.SysFont("arial", 24)
-            esc_surf   = font_small.render("Press ESC to return to Menu", True, (200, 200, 200))
-            self.screen.blit(esc_surf, ((sw - esc_surf.get_width()) // 2, ty + 70))
+            esc_surf = font_small.render("Press ESC to return to Menu", True, (200, 200, 200))
+            esc_x = (sw - esc_surf.get_width()) // 2
+            self.screen.blit(esc_surf, (esc_x, ty + 70))
