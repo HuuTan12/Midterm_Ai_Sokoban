@@ -56,7 +56,7 @@ class MenuScreen:
         self.map_paths           = map_paths
         self.is_competitive      = is_competitive
         self.selected_map_index  = 0
-        self.algorithms          = ["ucs", "astar", "bfs", "gbfs"]
+        self.algorithms          = ["ucs", "astar"]
         self.selected_algo_index = 0
         self.is_confirmed        = False
         self.step_limit_str      = ""

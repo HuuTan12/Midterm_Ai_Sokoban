@@ -2,71 +2,71 @@ import heapq
 from core.rules import Rules
 from search.search_algorithm import SearchAlgorithm
 
-def reconstruct_path(goal_state, parent):
-    path = []
-    current = goal_state
-    while current in parent:
-        prev, action = parent[current]
-        path.append(action)
-        current = prev
-    path.reverse()
-    return path
+def tim_duong(st_dich, truoc_do):
+    duong = []
+    ht = st_dich
+    while ht in truoc_do:
+        truoc, hd = truoc_do[ht]
+        duong.append(hd)
+        ht = truoc
+    duong.reverse()
+    return duong
 
-def chebyshev(pos1, pos2):
-    return max(abs(pos1[0] - pos2[0]), abs(pos1[1] - pos2[1]))
+def khoang_cach_chebyshev(p1, p2):
+    return max(abs(p1[0] - p2[0]), abs(p1[1] - p2[1]))
 
 class GBFS(SearchAlgorithm):
-    def heuristic(self, state, board):
-        misplaced = list(set(state.boxes) - board.goals)
-        free_goals = list(board.goals - set(state.boxes))
-        if not misplaced:
+    def heuristic(self, st, board):
+        sai_vi_tri = list(set(st.boxes) - board.goals)
+        dich_trong = list(board.goals - set(st.boxes))
+        if not sai_vi_tri:
             return 0
-        total = 0
-        for box in misplaced:
-            best = min((chebyshev(box, g) for g in free_goals), default=0)
-            total += best
-        return total
+        tong = 0
+        for b in sai_vi_tri:
+            tot_nhat = min((khoang_cach_chebyshev(b, g) for g in dich_trong), default=0)
+            tong += tot_nhat
+        return tong
 
-    def search(self, start_state, board, timeout_seconds=30.0):
+    def search(self, st_dau, board, timeout_seconds=30.0):
         import time
-        start_time = time.time()
-        pq = []
-        tie = 0
-        expanded = 0
-        max_q = 1
+        t_bat_dau = time.time()
+        hang_doi = []
+        dem = 0
+        so_node = 0
+        max_hd = 1
 
-        h0 = self.heuristic(start_state, board)
-        heapq.heappush(pq, (h0, tie, start_state))
-        visited = set()
-        parent = {}
-        g_score = {start_state: 0}
+        h0 = self.heuristic(st_dau, board)
+        heapq.heappush(hang_doi, (h0, dem, st_dau))
+        da_xet = set()
+        truoc_do = {}
+        g_score = {st_dau: 0}
 
-        while pq:
-            if time.time() - start_time > timeout_seconds:
-                return None, 0, expanded, max_q
+        while hang_doi:
+            if time.time() - t_bat_dau > timeout_seconds:
+                return None, 0, so_node, max_hd
 
-            _, _, state = heapq.heappop(pq)
+            _, _, st = heapq.heappop(hang_doi)
 
-            if state in visited:
+            if st in da_xet:
                 continue
-            visited.add(state)
-            expanded += 1
+            da_xet.add(st)
+            so_node += 1
 
-            if state.is_goal(board):
-                path = reconstruct_path(state, parent)
-                return path, g_score.get(state, len(path)), expanded, max_q
+            if st.is_goal(board):
+                duong = tim_duong(st, truoc_do)
+                return duong, g_score.get(st, len(duong)), so_node, max_hd
 
-            for action, next_state in Rules.get_successors(state, board):
-                if next_state in visited:
+            for hd, st_tiep in Rules.get_successors(st, board):
+                if st_tiep in da_xet:
                     continue
-                new_g = g_score.get(state, 0) + 1
-                if next_state not in g_score or new_g < g_score[next_state]:
-                    g_score[next_state] = new_g
-                    parent[next_state] = (state, action)
-                    h = self.heuristic(next_state, board)
-                    tie += 1
-                    heapq.heappush(pq, (h, tie, next_state))
+                g_moi = g_score.get(st, 0) + 1
+                if st_tiep not in g_score or g_moi < g_score[st_tiep]:
+                    g_score[st_tiep] = g_moi
+                    truoc_do[st_tiep] = (st, hd)
+                    h = self.heuristic(st_tiep, board)
+                    dem += 1
+                    heapq.heappush(hang_doi, (h, dem, st_tiep))
 
-            max_q = max(max_q, len(pq))
+            max_hd = max(max_hd, len(hang_doi))
 
-        return None, 0, expanded, max_q
+        return None, 0, so_node, max_hd

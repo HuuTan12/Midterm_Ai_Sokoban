@@ -2,53 +2,77 @@ import heapq
 from core.rules import Rules
 from search.search_algorithm import SearchAlgorithm
 
-def reconstruct_path(goal_state, parent):
-    path = []
-    current = goal_state
-    while current in parent:
-        prev, action = parent[current]
-        path.append(action)
-        current = prev
-    path.reverse()
-    return path
+def tim_duong(st_dich, truoc_do):
+    duong = []
+    ht = st_dich
+    while ht in truoc_do:
+        truoc, hd = truoc_do[ht]
+        duong.append(hd)
+        ht = truoc
+    duong.reverse()
+    return duong
 
 class UCS(SearchAlgorithm):
-    def search(self, start_state, board, timeout_seconds=30.0):
+    def search(self, st_dau, board, timeout_seconds=30.0):
         import time
-        start_time = time.time()
-        pq = []
-        tie = 0
-        expanded = 0
-        max_q = 1
+        t_bat_dau = time.time()
+        hd = []
+        dem = 0
+        so_node = 0
+        max_hd = 1
 
-        heapq.heappush(pq, (0, tie, start_state))
-        visited = set()
-        parent = {}
-        cost = {start_state: 0}
+        heapq.heappush(hd, (0, dem, st_dau))
+        da_xet = set()
+        truoc_do = {}
+        chi_phi = {st_dau: 0}
 
-        while pq:
-            if time.time() - start_time > timeout_seconds:
-                return None, 0, expanded, max_q
+        st_tot_nhat = st_dau
+        
+        def ham_h_phu(st):
+            sai = list(set(st.boxes) - board.goals)
+            trong = list(board.goals - set(st.boxes))
+            t = 0
+            for b in sai:
+                tot = min((max(abs(b[0] - g[0]), abs(b[1] - g[1])) for g in trong), default=0)
+                t += tot
+            if sai:
+                toi_hop = min(max(abs(st.agent_pos[0] - b[0]), abs(st.agent_pos[1] - b[1])) for b in sai)
+                t += toi_hop
+            return t
+            
+        h_tot_nhat = ham_h_phu(st_dau)
 
-            g, _, state = heapq.heappop(pq)
+        while hd:
+            if time.time() - t_bat_dau > timeout_seconds:
+                if st_tot_nhat != st_dau:
+                    return tim_duong(st_tot_nhat, truoc_do), chi_phi.get(st_tot_nhat, 0), so_node, max_hd
+                return None, 0, so_node, max_hd
 
-            if state in visited:
+            g, _, st = heapq.heappop(hd)
+
+            if st in da_xet:
                 continue
-            visited.add(state)
-            expanded += 1
+            da_xet.add(st)
+            so_node += 1
 
-            if state.is_goal(board):
-                path = reconstruct_path(state, parent)
-                return path, g, expanded, max_q
+            if st.is_goal(board):
+                duong = tim_duong(st, truoc_do)
+                return duong, g, so_node, max_hd
 
-            for action, next_state in Rules.get_successors(state, board):
-                new_g = g + 1
-                if next_state not in visited and (next_state not in cost or new_g < cost[next_state]):
-                    cost[next_state] = new_g
-                    parent[next_state] = (state, action)
-                    tie += 1
-                    heapq.heappush(pq, (new_g, tie, next_state))
+            for hdg, st_tiep in Rules.get_successors(st, board):
+                g_moi = g + 1
+                if st_tiep not in da_xet and (st_tiep not in chi_phi or g_moi < chi_phi[st_tiep]):
+                    chi_phi[st_tiep] = g_moi
+                    truoc_do[st_tiep] = (st, hdg)
+                    
+                    h_tam = ham_h_phu(st_tiep)
+                    if h_tam < h_tot_nhat:
+                        h_tot_nhat = h_tam
+                        st_tot_nhat = st_tiep
+                        
+                    dem += 1
+                    heapq.heappush(hd, (g_moi, dem, st_tiep))
 
-            max_q = max(max_q, len(pq))
+            max_hd = max(max_hd, len(hd))
 
-        return None, 0, expanded, max_q
+        return None, 0, so_node, max_hd

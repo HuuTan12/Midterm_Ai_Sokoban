@@ -38,13 +38,11 @@ def _is_competitive(path: str) -> bool:
         return False
 
 
-def _draw_loading(screen: pygame.Surface, font: pygame.font.Font):
+def _draw_loading(screen: pygame.Surface, font: pygame.font.Font, hint_text=""):
     screen.fill((20, 20, 45))
     sw, sh = screen.get_size()
     txt  = font.render("Calculating solution...  Please wait.", True, (255, 215, 0))
-    hint = pygame.font.SysFont("arial", 18).render(
-        "A* (Agent 1)  vs  UCS (Agent 2)  -  Chebyshev Heuristic", True, (140, 135, 200)
-    )
+    hint = pygame.font.SysFont("arial", 18).render(hint_text, True, (140, 135, 200))
     screen.blit(txt,  ((sw - txt.get_width())  // 2, sh // 2 - 30))
     screen.blit(hint, ((sw - hint.get_width()) // 2, sh // 2 + 20))
 
@@ -99,7 +97,7 @@ class SokobanApp:
         self._comp_menu = MenuScreen(self.screen, self._comp_maps, is_competitive=True)
         self._state = self.S_COMP_MENU
 
-    def _start_comp_solving(self, map_path: str, algorithm: str, step_limit: int):
+    def _start_comp_solving(self, map_path: str, step_limit: int):
         self._comp_result = None
         self._state       = self.S_COMP_SOLVE
 
@@ -166,7 +164,7 @@ class SokobanApp:
                 confirmed = self._comp_menu.handle_event(event)
                 if confirmed:
                     map_path, algo, step_limit = self._comp_menu.get_selection()
-                    self._start_comp_solving(map_path, algo, step_limit)
+                    self._start_comp_solving(map_path, step_limit)
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 self._go_main_menu()
 
@@ -204,7 +202,7 @@ class SokobanApp:
         elif self._state == self.S_COMP_MENU and self._comp_menu:
             self._comp_menu.draw()
         elif self._state == self.S_COMP_SOLVE:
-            _draw_loading(self.screen, self._font_big)
+            _draw_loading(self.screen, self._font_big, "A* (Agent 1)  vs  UCS (Agent 2)  -  Chebyshev Heuristic")
         elif self._state == self.S_COMP_GAME and self._comp_game:
             self._comp_game.draw()
 
