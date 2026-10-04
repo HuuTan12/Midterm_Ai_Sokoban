@@ -9,55 +9,55 @@ class AgentHieu:
         self.algo = UCS()
         self.name = "Agent Hieu (UCS)"
         self.path = []
-        self.old_boxes = None
-        self.old_pos = None
+        self.expected_boxes = None
+        self.expected_pos = None
 
     def get_action(self, comp_state: CompetitiveState, board: Board):
-        pos1 = comp_state.agent2_pos
-        pos2 = comp_state.agent1_pos
+        agent_pos = comp_state.agent2_pos
+        other_pos = comp_state.agent1_pos
 
-        if pos1 is None:
+        if agent_pos is None:
             return None
 
-        cur_boxes = tuple(sorted(comp_state.all_boxes))
+        current_boxes = tuple(sorted(comp_state.all_boxes))
 
-        if self.path and self.old_boxes is not None and self.old_pos is not None:
-            if cur_boxes != self.old_boxes or pos1 != self.old_pos:
+        if self.path and self.expected_boxes is not None and self.expected_pos is not None:
+            if current_boxes != self.expected_boxes or agent_pos != self.expected_pos:
                 self.path = []
 
         if self.path:
-            next_act = self.path[0]
-            tmp_s = State(pos1, cur_boxes)
-            bi_can = True
-            for a, suc in Rules.get_successors(tmp_s, board):
-                if a == next_act:
-                    bi_can = (suc.agent_pos == pos2 or pos2 in suc.boxes)
+            next_action = self.path[0]
+            state_obj = State(agent_pos, current_boxes)
+            blocked = True
+            for act, succ in Rules.get_successors(state_obj, board):
+                if act == next_action:
+                    blocked = (succ.agent_pos == other_pos or other_pos in succ.boxes)
                     break
-            if bi_can:
+            if blocked:
                 self.path = []
 
         if not self.path:
-            tuong_gia = set(board.walls)
-            if pos2 is not None:
-                tuong_gia.add(pos2)
+            temp_walls = set(board.walls)
+            if other_pos is not None:
+                temp_walls.add(other_pos)
             
-            fake_board = Board(board.width, board.height, tuong_gia, board.goals)
-            tmp_s = State(pos1, cur_boxes)
+            temp_board = Board(board.width, board.height, temp_walls, board.goals)
+            state_obj = State(agent_pos, current_boxes)
             
-            p, _, _, _ = self.algo.search(tmp_s, fake_board, timeout_seconds=1.0)
-            if p:
-                self.path = p
+            path, _, _, _ = self.algo.search(state_obj, temp_board, timeout_seconds=1.0)
+            if path:
+                self.path = path
             else:
                 return None
 
         if self.path:
-            act = self.path.pop(0)
-            tmp_s = State(pos1, cur_boxes)
-            for a, suc in Rules.get_successors(tmp_s, board):
-                if a == act:
-                    self.old_boxes = suc.boxes
-                    self.old_pos = suc.agent_pos
+            action = self.path.pop(0)
+            state_obj = State(agent_pos, current_boxes)
+            for act, succ in Rules.get_successors(state_obj, board):
+                if act == action:
+                    self.expected_boxes = succ.boxes
+                    self.expected_pos = succ.agent_pos
                     break
-            return act
+            return action
 
         return None

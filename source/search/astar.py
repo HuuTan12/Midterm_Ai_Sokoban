@@ -2,76 +2,76 @@ import heapq
 from core.rules import Rules
 from search.search_algorithm import SearchAlgorithm
 
-def tim_duong(st_dich, truoc_do):
-    duong = []
-    ht = st_dich
-    while ht in truoc_do:
-        truoc, hd = truoc_do[ht]
-        duong.append(hd)
-        ht = truoc
-    duong.reverse()
-    return duong
+def reconstruct_path(goal_state, parent):
+    path = []
+    current = goal_state
+    while current in parent:
+        prev, action = parent[current]
+        path.append(action)
+        current = prev
+    path.reverse()
+    return path
 
-def khoang_cach(p1, p2):
-    return max(abs(p1[0] - p2[0]), abs(p1[1] - p2[1]))
+def chebyshev(pos1, pos2):
+    return max(abs(pos1[0] - pos2[0]), abs(pos1[1] - pos2[1]))
 
 class AStar(SearchAlgorithm):
-    def heuristic(self, st, board):
-        sai = list(set(st.boxes) - board.goals)
-        trong = list(board.goals - set(st.boxes))
-        tong = 0
-        for b in sai:
-            tot = min((khoang_cach(b, g) for g in trong), default=0)
-            tong += tot
-        return tong
+    def heuristic(self, state, board):
+        misplaced = list(set(state.boxes) - board.goals)
+        free_goals = list(board.goals - set(state.boxes))
+        total = 0
+        for box in misplaced:
+            best = min((chebyshev(box, g) for g in free_goals), default=0)
+            total += best
+        return total
 
-    def search(self, st_dau, board, timeout_seconds=30.0):
+    def search(self, start_state, board, timeout_seconds=30.0):
         import time
-        t_bat_dau = time.time()
-        hd = []
-        dem = 0
-        so_node = 0
-        max_hd = 1
+        start_time = time.time()
+        pq = []
+        tie = 0
+        expanded = 0
+        max_q = 1
 
-        g = {st_dau: 0}
-        h = self.heuristic(st_dau, board)
-        heapq.heappush(hd, (g[st_dau] + h, dem, st_dau))
-        da_xet = set()
-        truoc_do = {}
+        g = {start_state: 0}
+        h = self.heuristic(start_state, board)
+        heapq.heappush(pq, (g[start_state] + h, tie, start_state))
+        visited = set()
+        parent = {}
 
-        st_tot_nhat = st_dau
-        h_tot_nhat = h
+        best_state = start_state
+        best_h = h
 
-        while hd:
-            if time.time() - t_bat_dau > timeout_seconds:
-                if st_tot_nhat != st_dau:
-                    return tim_duong(st_tot_nhat, truoc_do), g.get(st_tot_nhat, 0), so_node, max_hd
-                return None, 0, so_node, max_hd
+        while pq:
+            if time.time() - start_time > timeout_seconds:
+                if best_state != start_state:
+                    return reconstruct_path(best_state, parent), g.get(best_state, 0), expanded, max_q
+                return None, 0, expanded, max_q
 
-            f, _, st = heapq.heappop(hd)
+            f, _, state = heapq.heappop(pq)
 
-            if st.is_goal(board):
-                duong = tim_duong(st, truoc_do)
-                return duong, g[st], so_node, max_hd
+            if state.is_goal(board):
+                path = reconstruct_path(state, parent)
+                return path, g[state], expanded, max_q
 
-            if st in da_xet:
+            if state in visited:
                 continue
-            da_xet.add(st)
-            so_node += 1
+            visited.add(state)
+            expanded += 1
 
-            for hdg, st_tiep in Rules.get_successors(st, board):
-                g_moi = g[st] + 1
-                if st_tiep not in da_xet and (st_tiep not in g or g_moi < g[st_tiep]):
-                    truoc_do[st_tiep] = (st, hdg)
-                    g[st_tiep] = g_moi
-                    h_moi = self.heuristic(st_tiep, board)
+            for action, next_state in Rules.get_successors(state, board):
+                new_g = g[state] + 1
+                if next_state not in visited and (next_state not in g or new_g < g[next_state]):
+                    parent[next_state] = (state, action)
+                    g[next_state] = new_g
+                    new_h = self.heuristic(next_state, board)
                     
-                    if h_moi < h_tot_nhat:
-                        h_tot_nhat = h_moi
-                        st_tot_nhat = st_tiep
+                    if new_h < best_h:
+                        best_h = new_h
+                        best_state = next_state
                         
-                    dem += 1
-                    heapq.heappush(hd, (g_moi + h_moi, dem, st_tiep))
-                    max_hd = max(max_hd, len(hd))
+                    tie += 1
+                    heapq.heappush(pq, (new_g + new_h, tie, next_state))
+                    max_q = max(max_q, len(pq))
 
-        return None, 0, so_node, max_hd
+        return None, 0, expanded, max_q

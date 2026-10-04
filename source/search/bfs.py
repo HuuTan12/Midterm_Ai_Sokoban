@@ -2,46 +2,46 @@ from collections import deque
 from core.rules import Rules
 from search.search_algorithm import SearchAlgorithm
 
-def tim_duong(st_dich, truoc_do):
-    duong_di = []
-    hien_tai = st_dich
-    while hien_tai in truoc_do:
-        truoc, hanh_dong = truoc_do[hien_tai]
-        duong_di.append(hanh_dong)
-        hien_tai = truoc
-    duong_di.reverse()
-    return duong_di
+def reconstruct_path(goal_state, parent):
+    path = []
+    current = goal_state
+    while current in parent:
+        prev, action = parent[current]
+        path.append(action)
+        current = prev
+    path.reverse()
+    return path
 
 class BFS(SearchAlgorithm):
-    def search(self, st_dau, board, timeout_seconds=30.0):
+    def search(self, start_state, board, timeout_seconds=30.0):
         import time
-        t_bat_dau = time.time()
-        hd = deque()
-        da_xet = set()
-        truoc_do = {}
-        so_node = 0
-        max_hd = 1
+        start_time = time.time()
+        queue = deque()
+        visited = set()
+        parent = {}
+        expanded = 0
+        max_q = 1
 
-        hd.append(st_dau)
-        da_xet.add(st_dau)
+        queue.append(start_state)
+        visited.add(start_state)
 
-        while hd:
-            if time.time() - t_bat_dau > timeout_seconds:
-                return None, 0, so_node, max_hd
+        while queue:
+            if time.time() - start_time > timeout_seconds:
+                return None, 0, expanded, max_q
 
-            st = hd.popleft()
-            so_node += 1
+            state = queue.popleft()
+            expanded += 1
 
-            if st.is_goal(board):
-                duong = tim_duong(st, truoc_do)
-                return duong, len(duong), so_node, max_hd
+            if state.is_goal(board):
+                path = reconstruct_path(state, parent)
+                return path, len(path), expanded, max_q
 
-            for hdg, st_tiep in Rules.get_successors(st, board):
-                if st_tiep not in da_xet:
-                    da_xet.add(st_tiep)
-                    truoc_do[st_tiep] = (st, hdg)
-                    hd.append(st_tiep)
+            for action, next_state in Rules.get_successors(state, board):
+                if next_state not in visited:
+                    visited.add(next_state)
+                    parent[next_state] = (state, action)
+                    queue.append(next_state)
 
-            max_hd = max(max_hd, len(hd))
+            max_q = max(max_q, len(queue))
 
-        return None, 0, so_node, max_hd
+        return None, 0, expanded, max_q
