@@ -46,8 +46,6 @@ class Game:
         from source.core.rules      import Rules
         from source.search.ucs      import UCS
         from source.search.astar    import AStar
-        from source.search.bfs      import BFS
-        from source.search.gbfs     import GBFS
 
         map_path, algorithm = self.menu.get_selection()
         map_lines = MapParser.load_map(map_path)
@@ -64,10 +62,6 @@ class Game:
                 solver = UCS()
             elif algorithm == "astar":
                 solver = AStar()
-            elif algorithm == "bfs":
-                solver = BFS()
-            elif algorithm == "gbfs":
-                solver = GBFS()
             else:
                 solver = AStar()
 

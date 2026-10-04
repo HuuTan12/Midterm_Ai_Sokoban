@@ -23,7 +23,7 @@ class MainMenuScreen:
     OPTIONS = [
         (
             "SINGLE AGENT",
-            "UCS  /  A*  /  BFS  /  GBFS  -  Automated Search",
+            "UCS  /  A*  -  Automated Search",
             "player.png",
         ),
         (
@@ -108,7 +108,7 @@ class MainMenuScreen:
         line_y = title_y + title.get_height() + 8
         pygame.draw.line(self.screen, self.C_TITLE, (tx, line_y), (tx + title.get_width(), line_y), 2)
 
-        sub = self.f_sub.render("Hieu's Team  -  TDTU AI Midterm  -  Sokoban Puzzle Solver", True, self.C_SUB)
+        sub = self.f_sub.render("Hieu's Team - AI Midterm - TDTU", True, self.C_SUB)
         self.screen.blit(sub, ((sw - sub.get_width()) // 2, line_y + 10))
 
         BTN_W       = 480
@@ -155,8 +155,17 @@ class MainMenuScreen:
                 arrow = self.f_label.render(">", True, self.C_ARROW)
                 self.screen.blit(arrow, (BTN_X - 28, rect.top + (BTN_H - arrow.get_height()) // 2))
 
+        f_team = pygame.font.SysFont("arial", 18, bold=True)
+        txt1 = f_team.render("Executed by", True, (180, 180, 220))
+        txt2 = self.f_desc.render("Nguyen Duc Hieu - 524H0087", True, (160, 155, 210))
+        txt3 = self.f_desc.render("Nguyen Huu Tan - 524H0028", True, (160, 155, 210))
+        
+        self.screen.blit(txt1, ((sw - txt1.get_width()) // 2, sh - 110))
+        self.screen.blit(txt2, ((sw - txt2.get_width()) // 2, sh - 85))
+        self.screen.blit(txt3, ((sw - txt3.get_width()) // 2, sh - 60))
+
         hint = self.f_hint.render(
             "Up/Down: Navigate   |   Enter / Click: Confirm   |   Esc: Quit",
             True, self.C_HINT,
         )
-        self.screen.blit(hint, ((sw - hint.get_width()) // 2, sh - 32))
+        self.screen.blit(hint, ((sw - hint.get_width()) // 2, sh - 28))

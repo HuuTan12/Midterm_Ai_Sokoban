@@ -1,16 +1,41 @@
+import random
 from source.search.ucs import UCS
 from source.core.state import State
 from source.core.board import Board
 from source.core.competitive_state import CompetitiveState
 from source.core.rules import Rules
 
+DIRECTIONS = ["North", "South", "East", "West"]
+DELTA = {"North": (-1, 0), "South": (1, 0), "West": (0, -1), "East": (0, 1)}
+
 class AgentHieu:
     def __init__(self):
         self.algo = UCS()
         self.name = "Agent Hieu (UCS)"
         self.path = []
-        self.expected_boxes = None
-        self.expected_pos = None
+        self.last_pos = None
+        self.stuck_count = 0
+
+    def _valid_moves(self, agent_pos, other_pos, board):
+        moves = []
+        for d in DIRECTIONS:
+            dr, dc = DELTA[d]
+            np = (agent_pos[0] + dr, agent_pos[1] + dc)
+            if not board.is_within_bounds(np) or board.is_wall(np):
+                continue
+            if np == other_pos:
+                continue
+            moves.append(d)
+        return moves
+
+    def _find_path(self, agent_pos, boxes, other_pos, board):
+        temp_walls = set(board.walls)
+        if other_pos is not None:
+            temp_walls.add(other_pos)
+        temp_board = Board(board.width, board.height, temp_walls, board.goals)
+        state_obj = State(agent_pos, tuple(sorted(boxes)))
+        path, _, _, _ = self.algo.search(state_obj, temp_board, timeout_seconds=0.5)
+        return path or []
 
     def get_action(self, comp_state: CompetitiveState, board: Board):
         agent_pos = comp_state.agent2_pos
@@ -19,45 +44,40 @@ class AgentHieu:
         if agent_pos is None:
             return None
 
-        current_boxes = tuple(sorted(comp_state.all_boxes))
+        if agent_pos == self.last_pos:
+            self.stuck_count += 1
+        else:
+            self.stuck_count = 0
+            self.path = []
+        self.last_pos = agent_pos
 
-        if self.path and self.expected_boxes is not None and self.expected_pos is not None:
-            if current_boxes != self.expected_boxes or agent_pos != self.expected_pos:
-                self.path = []
-
-        if self.path:
-            next_action = self.path[0]
-            state_obj = State(agent_pos, current_boxes)
-            blocked = True
-            for act, succ in Rules.get_successors(state_obj, board):
-                if act == next_action:
-                    blocked = (succ.agent_pos == other_pos or other_pos in succ.boxes)
-                    break
-            if blocked:
-                self.path = []
+        if self.stuck_count >= 2:
+            self.path = []
+            self.stuck_count = 0
+            valid = self._valid_moves(agent_pos, other_pos, board)
+            return random.choice(valid) if valid else None
 
         if not self.path:
-            temp_walls = set(board.walls)
-            if other_pos is not None:
-                temp_walls.add(other_pos)
-            
-            temp_board = Board(board.width, board.height, temp_walls, board.goals)
-            state_obj = State(agent_pos, current_boxes)
-            
-            path, _, _, _ = self.algo.search(state_obj, temp_board, timeout_seconds=1.0)
-            if path:
-                self.path = path
-            else:
-                return None
+            my_unfinished = [b for b in comp_state.agent2_boxes if not board.is_goal(b)]
+            enemy_on_goal = [b for b in comp_state.agent1_boxes if board.is_goal(b)]
+            neutral = list(comp_state.neutral_boxes)
 
-        if self.path:
-            action = self.path.pop(0)
-            state_obj = State(agent_pos, current_boxes)
-            for act, succ in Rules.get_successors(state_obj, board):
-                if act == action:
-                    self.expected_boxes = succ.boxes
-                    self.expected_pos = succ.agent_pos
-                    break
-            return action
+            if neutral or my_unfinished:
+                self.path = self._find_path(agent_pos, list(comp_state.all_boxes), other_pos, board)
+            elif enemy_on_goal:
+                target = min(enemy_on_goal, key=lambda b: abs(b[0]-agent_pos[0]) + abs(b[1]-agent_pos[1]))
+                steal_goals = {g for g in board.goals if g != target}
+                if not steal_goals:
+                    steal_goals = board.goals
+                steal_board = Board(board.width, board.height, board.walls, steal_goals)
+                boxes = [b for b in comp_state.all_boxes if b != target] + [target]
+                self.path = self._find_path(agent_pos, boxes, other_pos, steal_board)
 
-        return None
+        if not self.path:
+            valid = self._valid_moves(agent_pos, other_pos, board)
+            return random.choice(valid) if valid else None
+
+        action = self.path.pop(0)
+        if hasattr(action, 'value'):
+            action = action.value
+        return action

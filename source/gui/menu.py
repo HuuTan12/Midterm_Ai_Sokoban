@@ -29,8 +29,8 @@ VS_COLOR    = (255, 180,  50)
 
 ALGO_LIST = ["ucs", "astar"]
 ALGO_INFO = {
-    "ucs":   ("UCS",  "Uniform Cost Search",      "Search by increasing cost"),
-    "astar": ("A*",   "A* (Hungarian-Chebyshev)",  "Optimal assignment + Deadlock handling"),
+    "ucs":   ("UCS",  "Uniform Cost Search", ""),
+    "astar": ("A*",   "A* (Hungarian-Chebyshev)", ""),
 }
 
 
@@ -120,9 +120,9 @@ class MenuScreen:
         pygame.draw.line(self.screen, GOLD, (tx, line_y), (tx + text.get_width(), line_y), 2)
 
         if self.is_competitive:
-            sub_txt = "Up/Down: select Map   |   Type numbers: set Max Steps   |   Enter / Click: Start"
+            sub_txt = "Up/Down: select Map | Type numbers: set Steps | Enter/Click: Start"
         else:
-            sub_txt = "Up/Down: select Map   |   Left/Right: select Algorithm   |   Enter / Click: Confirm"
+            sub_txt = "Up/Down: select Map | Left/Right: select Algorithm | Enter/Click: Confirm"
         sub = self.font_sub.render(sub_txt, True, SUBTITLE)
         self.screen.blit(sub, ((sw - sub.get_width()) // 2, line_y + 5))
 
@@ -149,15 +149,15 @@ class MenuScreen:
         self.start_rect = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
         pygame.draw.rect(self.screen, BTN_BG,  self.start_rect, border_radius=12)
         pygame.draw.rect(self.screen, BTN_BDR, self.start_rect, 2, border_radius=12)
-        btn_lbl = self.font_btn.render(">  START  ( Enter )", True, BTN_TXT)
+        btn_lbl = self.font_btn.render("Start( Enter )", True, BTN_TXT)
         bx = btn_x + (btn_w - btn_lbl.get_width())  // 2
         by = btn_y + (btn_h - btn_lbl.get_height()) // 2
         self.screen.blit(btn_lbl, (bx, by))
 
         if self.is_competitive:
-            hint = "Up/Down: Map   |   Type numbers: Max Steps   |   Enter/Click: Start   |   Esc: Back"
+            hint = "Up/Down: Map | Type numbers: Max Steps | Enter/Click: Start | Esc: Back"
         else:
-            hint = "Up/Down: Map   |   Left/Right: Algorithm   |   Enter/Click: Confirm   |   Esc: Back"
+            hint = "Up/Down: Map | Left/Right: Algorithm | Enter/Click: Confirm | Esc: Back"
         hint_surf = self.font_hint.render(hint, True, HINT_COLOR)
         self.screen.blit(hint_surf, ((sw - hint_surf.get_width()) // 2, sh - 20))
 
@@ -279,8 +279,8 @@ class MenuScreen:
         c1   = pygame.Rect(card_x, c1_y, card_w, card_h)
         pygame.draw.rect(self.screen, (20, 30, 70), c1, border_radius=8)
         pygame.draw.rect(self.screen, AGENT1_COL,  c1, 2, border_radius=8)
-        self.screen.blit(self.font_algo.render("Agent 1  (A*)",                           True, AGENT1_COL),     (card_x + 10, c1_y + 6))
-        self.screen.blit(self.font_small.render("Algorithm: A* Chebyshev  |  agent_tan.py",  True, (130, 160, 230)), (card_x + 10, c1_y + 30))
+        self.screen.blit(self.font_algo.render("Agent 1  (A*)", True, AGENT1_COL),(card_x + 10, c1_y + 6))
+        self.screen.blit(self.font_small.render("Algorithm: A* Chebyshev | agent_tan.py",  True, (130, 160, 230)), (card_x + 10, c1_y + 30))
 
         vs_surf = self.font_algo.render("VS", True, VS_COLOR)
         vs_y    = c1_y + card_h + gap
@@ -290,10 +290,10 @@ class MenuScreen:
         c2   = pygame.Rect(card_x, c2_y, card_w, card_h)
         pygame.draw.rect(self.screen, (20, 60, 35), c2, border_radius=8)
         pygame.draw.rect(self.screen, AGENT2_COL,  c2, 2, border_radius=8)
-        self.screen.blit(self.font_algo.render("Agent 2  (UCS)",                              True, AGENT2_COL),     (card_x + 10, c2_y + 6))
-        self.screen.blit(self.font_small.render("Algorithm: UCS             |  agent_hieu.py", True, (120, 210, 155)), (card_x + 10, c2_y + 30))
+        self.screen.blit(self.font_algo.render("Agent 2  (UCS)", True, AGENT2_COL), (card_x + 10, c2_y + 6))
+        self.screen.blit(self.font_small.render("Algorithm: UCS | agent_hieu.py", True, (120, 210, 155)), (card_x + 10, c2_y + 30))
 
-        badge = self.font_small.render("Time limit per step: 1,000 ms (enforced)", True, (200, 200, 100))
+        badge = self.font_small.render("Time limit step: 1,000ms", True, (200, 200, 100))
         self.screen.blit(badge, (x + (w - badge.get_width()) // 2, c2_y + card_h + 8))
 
         match_y = y + agent_h + 14

@@ -10,14 +10,14 @@ MAP_PATH = os.path.join(os.path.dirname(__file__), '..', 'maps', 'Map1.txt')
 
 board, start_state = MapParser.parse_level(MapParser.load_map(MAP_PATH))
 
-print("========== UCS ==========")
+print("===UCS===")
 t0 = time.time()
 ucs_result = UCS().search(start_state, board)
 print(f"Path:     {ucs_result[0]}")
 print(f"Cost:     {ucs_result[1]}")
 print(f"Time:     {time.time() - t0:.4f}s")
 
-print("\n========== A* ==========")
+print("\n===A*===")
 t0 = time.time()
 astar_result = AStar().search(start_state, board)
 print(f"Path:     {astar_result[0]}")

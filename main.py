@@ -116,11 +116,15 @@ class SokobanApp:
             for _ in range(step_limit):
                 a1 = agent1.get_action(state, board)
                 a2 = agent2.get_action(state, board)
-                if a1 is None and a2 is None:
-                    break
                 actions1.append(a1)
                 actions2.append(a2)
                 state = CompetitiveRules.apply_actions(state, a1, a2, board)
+                
+                if a1 is None and a2 is None:
+                    rem = step_limit - len(actions1)
+                    actions1.extend([None] * rem)
+                    actions2.extend([None] * rem)
+                    break
 
             self._comp_result = (actions1, actions2, map_path)
 

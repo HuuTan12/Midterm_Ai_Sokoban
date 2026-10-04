@@ -248,9 +248,9 @@ class CompetitiveGameScreen:
 
         winner_text = ""
         if is_ended:
-            if score1 > score2:   winner_text = " - AGENT 1 WINS!"
-            elif score2 > score1: winner_text = " - AGENT 2 WINS!"
-            else:                 winner_text = " - DRAW!"
+            if score1 > score2:   winner_text = "Agent 1 WINS!"
+            elif score2 > score1: winner_text = "Agent 2 WINS!"
+            else:                 winner_text = "DRAW!"
 
         f_title    = pygame.font.SysFont("arial", 28, bold=True)
         title_str  = "COMPETITIVE MODE (A* vs UCS)" + winner_text
