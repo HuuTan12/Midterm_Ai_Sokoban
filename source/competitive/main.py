@@ -20,7 +20,7 @@ def is_competitive_map(map_path):
         return False
 
 
-def real_competitive_search(map_path, algorithm, n_steps=50):
+def real_competitive_search(map_path, algorithm, n_steps=200):
     from source.core.map_parser import MapParser
     from source.core.competitive_rules import CompetitiveRules
     from source.search.agent_tan import AgentTan

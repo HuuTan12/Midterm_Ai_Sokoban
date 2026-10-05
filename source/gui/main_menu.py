@@ -111,7 +111,7 @@ class MainMenuScreen:
         sub = self.f_sub.render("Hieu's Team - Sokoban Puzzle Solver - TDTU", True, self.C_SUB)
         self.screen.blit(sub, ((sw - sub.get_width()) // 2, line_y + 10))
 
-        BTN_W = 480
+        BTN_W = 560
         BTN_H = 100
         BTN_X = (sw - BTN_W) // 2
         GAP = 24

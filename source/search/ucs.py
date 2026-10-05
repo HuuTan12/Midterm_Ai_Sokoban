@@ -2,6 +2,7 @@ import heapq
 from source.core.rules import Rules
 from source.search.search_algorithm import SearchAlgorithm
 
+
 def reconstruct_path(goal_state, parent):
     path = []
     current = goal_state
@@ -12,8 +13,9 @@ def reconstruct_path(goal_state, parent):
     path.reverse()
     return path
 
+
 class UCS(SearchAlgorithm):
-    def search(self, start_state, board, timeout_seconds=30.0):
+    def search(self, start_state, board, timeout_seconds=1.0):
         import time
         start_time = time.time()
         pq = []
@@ -27,20 +29,7 @@ class UCS(SearchAlgorithm):
         cost = {start_state: 0}
 
         best_state = start_state
-        
-        def simple_h(st):
-            misplaced = list(set(st.boxes) - board.goals)
-            free_goals = list(board.goals - set(st.boxes))
-            t = 0
-            for box in misplaced:
-                best = min((max(abs(box[0] - g[0]), abs(box[1] - g[1])) for g in free_goals), default=0)
-                t += best
-            if misplaced:
-                agent_to_box = min(max(abs(st.agent_pos[0] - b[0]), abs(st.agent_pos[1] - b[1])) for b in misplaced)
-                t += agent_to_box
-            return t
-            
-        best_h = simple_h(start_state)
+        best_score = sum(1 for b in start_state.boxes if board.is_goal(b))
 
         while pq:
             if time.time() - start_time > timeout_seconds:
@@ -64,12 +53,12 @@ class UCS(SearchAlgorithm):
                 if next_state not in visited and (next_state not in cost or new_g < cost[next_state]):
                     cost[next_state] = new_g
                     parent[next_state] = (state, action)
-                    
-                    nh = simple_h(next_state)
-                    if nh < best_h:
-                        best_h = nh
+
+                    score = sum(1 for b in next_state.boxes if board.is_goal(b))
+                    if score > best_score:
+                        best_score = score
                         best_state = next_state
-                        
+
                     tie += 1
                     heapq.heappush(pq, (new_g, tie, next_state))
 
