@@ -1,7 +1,9 @@
 import heapq
+from collections import deque
 from itertools import permutations
 from source.core.rules import Rules
 from source.search.search_algorithm import SearchAlgorithm
+
 
 def reconstruct_path(goal_state, parent):
     path = []
@@ -13,52 +15,76 @@ def reconstruct_path(goal_state, parent):
     path.reverse()
     return path
 
-def chebyshev(a, b):
-    return max(abs(a[0] - b[0]), abs(a[1] - b[1]))
+
+def bfs_dist(start, goal, walls, height, width):
+    if start == goal:
+        return 0
+    visited = {start}
+    queue = deque([(start, 0)])
+    while queue:
+        pos, dist = queue.popleft()
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            npos = (pos[0] + dr, pos[1] + dc)
+            if npos == goal:
+                return dist + 1
+            if (0 <= npos[0] < height and 0 <= npos[1] < width
+                    and npos not in walls and npos not in visited):
+                visited.add(npos)
+                queue.append((npos, dist + 1))
+    return float('inf')
+
 
 def is_corner_deadlock(box, board):
     if board.is_goal(box):
         return False
     r, c = box
-    top = board.is_wall((r - 1, c))
+    top    = board.is_wall((r - 1, c))
     bottom = board.is_wall((r + 1, c))
-    left = board.is_wall((r, c - 1))
-    right = board.is_wall((r, c + 1))
+    left   = board.is_wall((r, c - 1))
+    right  = board.is_wall((r, c + 1))
     return (top or bottom) and (left or right)
 
-def hungarian_min_cost(boxes, goals):
+
+def hungarian_min_cost(boxes, goals, board):
     if not boxes or not goals:
         return 0
     n = len(boxes)
     m = len(goals)
     best = float('inf')
-    
+
     if n <= m:
         for perm in permutations(goals, n):
-            cost = sum(chebyshev(b, g) for b, g in zip(boxes, perm))
+            cost = sum(
+                bfs_dist(b, g, board.walls, board.height, board.width)
+                for b, g in zip(boxes, perm)
+            )
             if cost < best:
                 best = cost
     else:
         for perm in permutations(boxes, m):
-            cost = sum(chebyshev(b, g) for b, g in zip(perm, goals))
+            cost = sum(
+                bfs_dist(b, g, board.walls, board.height, board.width)
+                for b, g in zip(perm, goals)
+            )
             if cost < best:
                 best = cost
     return best
+
 
 class AStar(SearchAlgorithm):
     def heuristic(self, state, board):
         misplaced = [b for b in state.boxes if not board.is_goal(b)]
         if not misplaced:
             return 0
-            
+
         for box in misplaced:
             if is_corner_deadlock(box, board):
                 return float('inf')
-                
-        free_goals = list(board.goals - set(state.boxes))
-        return hungarian_min_cost(misplaced, free_goals)
 
-    def search(self, start_state, board, timeout_seconds=30.0):
+        free_goals = list(board.goals - set(state.boxes))
+        return hungarian_min_cost(misplaced, free_goals, board)
+
+    def search(self, start_state, board, timeout_seconds=1.0):
         import time
         start_time = time.time()
         pq = []
