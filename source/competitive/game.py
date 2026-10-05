@@ -309,9 +309,9 @@ class CompetitiveGameScreen:
         winner_text = ""
         if is_ended:
             if score1 > score2:
-                winner_text = "Agent 1 WINS!"
+                winner_text = "Agent 1 WIN!"
             elif score2 > score1:
-                winner_text = "Agent 2 WINS!"
+                winner_text = "Agent 2 WIN!"
             else:
                 winner_text = "DRAW!"
 
