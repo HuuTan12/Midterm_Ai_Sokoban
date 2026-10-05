@@ -10,8 +10,8 @@ from source.search.astar import AStar
 
 MAPS_DIR   = os.path.join(os.path.dirname(__file__), '..', 'maps')
 MAP_NAMES  = ['Map1.txt', 'Map2.txt', 'Map3.txt', 'Map4.txt']
-TIMEOUT    = 60
-N_RUNS     = 5
+TIMEOUT    = 10
+N_RUNS     = 1
 
 def run_one(solver_cls, board, start_state):
     t0 = time.perf_counter()

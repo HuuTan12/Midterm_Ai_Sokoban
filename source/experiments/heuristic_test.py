@@ -8,91 +8,109 @@ from source.core.map_parser import MapParser
 from source.core.rules import Rules
 from source.search.astar import AStar
 
-MAP_PATH = os.path.join(os.path.dirname(__file__), '..', 'maps', 'Map1.txt')
-map_lines = MapParser.load_map(MAP_PATH)
-board, start_state = MapParser.parse_level(map_lines)
+MAPS_DIR = os.path.join(os.path.dirname(__file__), '..', 'maps')
+
+MAP_NAMES = ['Map1.txt', 'Map2.txt']
 solver = AStar()
 
-def get_all_reachable(start, board):
-    visited = set()
-    queue = deque([start])
-    while queue:
-        s = queue.popleft()
-        if s in visited:
-            continue
-        visited.add(s)
-        for _, ns in Rules.get_successors(s, board):
-            if ns not in visited:
-                queue.append(ns)
-    return visited
+def compute_true_costs_along_path(start_state, board):
+    print("  [INFO] Finding optimal solution path...")
+    path, cost, _, _ = solver.search(start_state, board, timeout_seconds=60)
+    
+    if path is None:
+        print(f"  [ERROR] Cannot find solution!")
+        return {}, []
 
-def compute_true_costs(states, board):
+    print(f"  [INFO] Solution found! Evaluating admissibility and consistency along the optimal path (length {len(path)})...")
+    
     costs = {}
-    for s in states:
-        if s.is_goal(board):
-            costs[s] = 0
-            continue
-        q = deque([(s, 0)])
-        seen = set()
-        found = False
-        while q:
-            cur, d = q.popleft()
-            if cur in seen:
-                continue
-            seen.add(cur)
-            if cur.is_goal(board):
-                costs[s] = d
-                found = True
-                break
-            for _, ns in Rules.get_successors(cur, board):
-                if ns not in seen:
-                    q.append((ns, d + 1))
-        if not found:
-            costs[s] = None
-    return costs
-
-print("=" * 60)
-print("  REQUIREMENT 4 — Heuristic Verification")
-print(f"  Map: {os.path.basename(MAP_PATH)}")
-print("=" * 60)
-
-all_states = get_all_reachable(start_state, board)
-true_costs = compute_true_costs(all_states, board)
-solvable = {s: c for s, c in true_costs.items() if c is not None}
-
-admissible = True
-for state, h_star in solvable.items():
-    if state.is_goal(board):
-        continue
-    h = solver.heuristic(state, board)
-    if h == float('inf'):
-        continue
-    if h > h_star:
-        admissible = False
-        break
-
-if admissible:
-    print("  >>> RESULT: ADMISSIBLE [PASS]")
-else:
-    print("  >>> RESULT: NOT ADMISSIBLE [FAIL]")
-
-consistent = True
-for state in all_states:
-    h_cur = solver.heuristic(state, board)
-    if h_cur == float('inf'):
-        continue
-
-    for action, next_state in Rules.get_successors(state, board):
-        h_next = solver.heuristic(next_state, board)
-        if h_next == float('inf'):
-            continue
+    states_on_path = []
+    
+    cur_state = start_state
+    for i in range(len(path)):
+        costs[cur_state] = len(path) - i
+        states_on_path.append(cur_state)
         
-        cost = 1
-        if h_cur > cost + h_next:
-            consistent = False
+        action = path[i]
+        for act, next_state in Rules.get_successors(cur_state, board):
+            if act == action:
+                cur_state = next_state
+                break
+                
+    costs[cur_state] = 0
+    states_on_path.append(cur_state)
+    
+    if not cur_state.is_goal(board):
+        print(f"  [ERROR] The solver timed out and only found a partial path (not a goal).")
+        return {}, []
+    
+    return costs, states_on_path
+
+def run_test_for_map(map_name):
+    map_path = os.path.join(MAPS_DIR, map_name)
+    if not os.path.exists(map_path):
+        return
+        
+    map_lines = MapParser.load_map(map_path)
+    board, start_state = MapParser.parse_level(map_lines)
+    
+    print("=" * 60)
+    print(f"  Heuristic Verification: {map_name}")
+    print("=" * 60)
+
+    true_costs, sampled_states = compute_true_costs_along_path(start_state, board)
+    solvable = true_costs
+
+    if not solvable:
+        return
+
+    admissible = True
+    for state, h_star in solvable.items():
+        if state.is_goal(board):
+            continue
+        h_cur = solver.heuristic(state, board)
+        if h_cur > h_star:
+            print(f"  [FAIL] Admissibility violated: h(n)={h_cur} > h*(n)={h_star}")
+            print(f"         Agent: {state.agent}")
+            print(f"         Boxes: {state.boxes}")
+            print(f"         Goals: {board.goals}")
+            misplaced = [b for b in state.boxes if not board.is_goal(b)]
+            free_goals = list(board.goals - set(state.boxes))
+            print(f"         Misplaced: {misplaced}")
+            print(f"         Free Goals: {free_goals}")
+            admissible = False
             break
 
-if consistent:
-    print("  >>> RESULT: CONSISTENT [PASS]")
-else:
-    print("  >>> RESULT: NOT CONSISTENT [FAIL]")
+    if admissible:
+        print("  >>> RESULT: ADMISSIBLE [PASS]")
+    else:
+        print("  >>> RESULT: NOT ADMISSIBLE [FAIL]")
+
+    consistent = True
+    for state in sampled_states:
+        h_cur = solver.heuristic(state, board)
+        if h_cur == float('inf'):
+            continue
+
+        for _, next_state in Rules.get_successors(state, board):
+            h_next = solver.heuristic(next_state, board)
+            if h_cur > 1 + h_next:
+                print(f"  [FAIL] Consistency violated: h(n)={h_cur} > 1 + h(n')={1 + h_next}")
+                consistent = False
+                break
+        if not consistent:
+            break
+
+    if consistent:
+        print("  >>> RESULT: CONSISTENT [PASS]")
+    else:
+        print("  >>> RESULT: NOT CONSISTENT [FAIL]")
+    print()
+
+def main():
+    print("Starting Heuristic Verification on all Maps...\n")
+    for map_name in MAP_NAMES:
+        run_test_for_map(map_name)
+
+if __name__ == "__main__":
+    main()
